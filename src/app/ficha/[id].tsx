@@ -2,9 +2,10 @@ import { router, useLocalSearchParams } from 'expo-router';
 import { useState } from 'react';
 import { Pressable, View } from 'react-native';
 
+import { useSummaries } from '@/components/clinic';
 import { BOL_LABEL } from '@/components/patient';
-import { Avatar, Bar, Button, Card, Chip, H2, H3, Muted, Row, Screen, Sheet, Txt, useToast } from '@/components/ui';
-import { boletos, brl, catalog, num } from '@/data/mock';
+import { Avatar, Bar, Button, Card, Chip, H2, H3, Muted, Row, Screen, Sheet, StateView, Txt, useToast } from '@/components/ui';
+import { brl, firstName, fmt, num } from '@/data/model';
 import { useStore } from '@/state/store';
 import { useColors } from '@/theme';
 
@@ -14,15 +15,27 @@ export default function Ficha() {
   const c = useColors();
   const toast = useToast();
   const { id } = useLocalSearchParams<{ id: string }>();
-  const { pById, pBol, pCred, pCredOk, pPoints, nextStep, set, redeem } = useStore();
-  const [sheet, setSheet] = useState<null | 'bonus' | 'redeem' | 'nocred'>(null);
+  const { pById, pPoints, rewards, registerStep, markPaid, addPoints, redeem, loading } = useStore();
+  const { one } = useSummaries();
+  const [sheet, setSheet] = useState<null | 'bonus' | 'redeem' | 'nocred' | 'register'>(null);
   const [bonus, setBonus] = useState(50);
   const [reward, setReward] = useState<string | null>(null);
+  const [busy, setBusy] = useState(false);
   const p = pById(id);
-  if (!p) return null;
-  const b = pBol(p);
-  const pct = Math.round((p.done / p.total) * 100);
-  const pts = pPoints(p);
+  if (!p) return <StateView who="clinica" loading={loading} empty="Paciente não encontrada." />;
+  const sum = one(p);
+  const { plan, info, bol: b } = sum;
+  const pct = sum.total ? Math.round((sum.done / sum.total) * 100) : 0;
+  const pts = pPoints(p.id);
+  const n = info?.nextStep ?? null;
+  const nextPay = info?.nextUnpaid ?? null;
+
+  const run = async (f: () => Promise<string | null>, ok: string) => {
+    setBusy(true);
+    const e = await f();
+    setBusy(false);
+    toast(e ?? ok);
+  };
 
   const kpi = (label: string, value: string) => (
     <View style={{ width: '50%', paddingVertical: 4 }}>
@@ -46,62 +59,77 @@ export default function Ficha() {
       <View style={{ alignItems: 'center', gap: 6 }}>
         <Avatar ini={p.ini} size={76} tone="nude" />
         <H2>{p.name}</H2>
-        <Muted size={14}>Paciente desde {p.since} · {p.phone}</Muted>
+        <Muted size={14}>Paciente desde {fmt(p.since)}{p.phone ? ` · ${p.phone}` : ''}</Muted>
+        {p.email ? <Muted size={13}>{p.email}{p.profileId ? ' · já entrou no app' : ' · ainda não entrou no app'}</Muted> : null}
       </View>
 
       <Card dark>
-        <Txt size={12} color={c.onNoir} style={{ opacity: 0.65 }}>Protocolo {p.plan}</Txt>
+        <Txt size={12} color={c.onNoir} style={{ opacity: 0.65 }}>{plan ? plan.name : 'Sem plano ativo'}</Txt>
         <View style={{ flexDirection: 'row', flexWrap: 'wrap' }}>
-          {kpi('Créditos', num(pCred(p)))}
+          {kpi('Créditos', num(info?.credits ?? 0))}
           {kpi('Pontos', num(pts))}
           {kpi('Progresso', `${pct}%`)}
-          {kpi('Próxima sessão', p.next ?? 'Concluído')}
+          {kpi('Próxima sessão', sum.next ?? (plan ? 'Concluído' : '—'))}
         </View>
         <Bar pct={pct} color={c.nude} track="rgba(247,242,239,0.18)" />
       </Card>
 
-      {!pCredOk(p) ? (
+      {!plan ? (
+        <Card style={{ gap: 6 }}>
+          <H3>Plano ainda não cadastrado</H3>
+          <Muted size={14}>O cadastro do plano, das etapas e dos boletos pela equipe entra no passo 5. Por enquanto, me envie os dados que eu lanço no servidor.</Muted>
+        </Card>
+      ) : null}
+
+      {n && !sum.credOk ? (
         <Card style={{ backgroundColor: c.wineSoft, gap: 6 }}>
           <H3>Sem créditos para a próxima sessão</H3>
           <Txt size={14}>
-            A próxima {p.id === 'jp' ? 'etapa' : 'sessão'} usa {num(p.id === 'jp' ? nextStep.price : p.needCred!)} créditos e a paciente tem {num(pCred(p))}. O procedimento só pode ser feito depois do pagamento.
+            A próxima etapa ({n.title}) usa {num(n.price)} créditos e a paciente tem {num(info!.credits)}. O procedimento só pode ser feito depois do pagamento.
           </Txt>
         </Card>
       ) : null}
 
-      <Card>
-        <Row between><H3>Pagamento</H3>{b.s ? <Chip label={BOL_LABEL[b.s][0]} tone={BOL_LABEL[b.s][1]} /> : null}</Row>
-        <Muted size={14}>{p.pay} · {b.info}</Muted>
-        {p.id === 'jp' && b.n && b.s !== 'pago' ? (
-          <Button label={`Dar baixa (${brl(b.value!)} viram ${num(b.value!)} créditos)`} onPress={() => {
-            const n = b.n!;
-            set((s) => ({ ...s, paid: { ...s.paid, [n]: true }, proof: { ...s.proof, [n]: false } }));
-            toast(`Boleto baixado. ${num(boletos[n - 1].value)} créditos liberados para a paciente.`);
-          }} />
-        ) : null}
-        {p.id !== 'jp' && b.s && ['vencido', 'aberto', 'analise'].includes(b.s) ? (
-          <Button label="Marcar como pago" onPress={() => { set((s) => ({ ...s, finOk: { ...s.finOk, [p.id]: true } })); toast('Pagamento confirmado. Créditos liberados.'); }} />
-        ) : null}
-      </Card>
+      {plan ? (
+        <Card>
+          <Row between><H3>Pagamento</H3>{b.s ? <Chip label={BOL_LABEL[b.s][0]} tone={BOL_LABEL[b.s][1]} /> : null}</Row>
+          <Muted size={14}>Boleto · {b.info}</Muted>
+          {nextPay ? (
+            <Button label={`Dar baixa (${brl(nextPay.value)} viram ${num(nextPay.value)} créditos)`} disabled={busy}
+              onPress={() => run(() => markPaid(nextPay.id), `Boleto baixado. ${num(nextPay.value)} créditos liberados para a paciente.`)} />
+          ) : null}
+        </Card>
+      ) : null}
 
       <Row style={{ flexWrap: 'wrap', gap: 8 }}>
-        <Button label="Registrar procedimento" variant="ghost" onPress={() => (pCredOk(p) ? toast(`Procedimento registrado. Créditos debitados e +50 pontos para ${p.name.split(' ')[0]}.`) : setSheet('nocred'))} />
+        {n ? <Button label="Registrar procedimento" variant="ghost" disabled={busy} onPress={() => setSheet(sum.credOk ? 'register' : 'nocred')} /> : null}
         <Button label="Lançar pontos" variant="ghost" onPress={() => setSheet('bonus')} />
         <Button label="Resgatar recompensa" variant="ghost" onPress={() => { setReward(null); setSheet('redeem'); }} />
-        {p.id === 'jp' ? <Button label="Contrato (PDF)" variant="ghost" onPress={() => router.push('/contrato-pdf')} /> : null}
+        {plan ? <Button label="Contrato (PDF)" variant="ghost" onPress={() => router.push('/contrato-pdf')} /> : null}
       </Row>
 
+      {n ? (
+        <Sheet visible={sheet === 'register'} onClose={() => setSheet(null)} title="Registrar procedimento" eyebrow={p.name}
+          text={`Marcar "${n.title}" como realizado. Serão usados ${num(n.price)} créditos e ${firstName(p.name)} ganha 50 pontos.`}
+          okLabel="Registrar" onOk={() => run(() => registerStep(n.id, p.id), `Procedimento registrado. ${num(n.price)} créditos usados e +50 pontos.`)} />
+      ) : null}
       <Sheet visible={sheet === 'nocred'} onClose={() => setSheet(null)} title="Créditos insuficientes"
-        text={`${p.name} tem ${num(pCred(p))} créditos, menos do que o procedimento custa. Regularize o pagamento antes de realizar a sessão.`}
+        text={`${p.name} tem ${num(info?.credits ?? 0)} créditos, menos do que o procedimento custa. Regularize o pagamento antes de realizar a sessão.`}
         okLabel="Ir para o financeiro" onOk={() => router.navigate('/clinica/financeiro')} />
       <Sheet visible={sheet === 'bonus'} onClose={() => setSheet(null)} title="Lançar pontos" eyebrow={`${p.name} · ${num(pts)} pontos`} okLabel="Lançar"
-        onOk={() => { set((s) => ({ ...s, bonus: { ...s.bonus, [p.id]: (s.bonus[p.id] ?? 0) + bonus } })); toast(`${bonus} pontos lançados.`); }}>
+        onOk={() => run(() => addPoints(p.id, bonus, BONUS.find(([v]) => v === bonus)![1]), `${bonus} pontos lançados.`)}>
         {pick(BONUS.map(([v, l]) => [String(v), `${v} pontos · ${l}`]), String(bonus), (v) => setBonus(Number(v)))}
       </Sheet>
       <Sheet visible={sheet === 'redeem'} onClose={() => setSheet(null)} title="Resgatar recompensa" eyebrow={`${p.name} · ${num(pts)} pontos`} okLabel="Resgatar" okDisabled={!reward}
         text="Os pontos são descontados da paciente e um voucher é gerado na aba Resgates."
-        onOk={() => { const code = redeem(p.id, reward!); toast(`Voucher ${code} gerado.`); }}>
-        {pick(catalog.map((k) => [k.id, `${k.name} · ${k.cost} pts`, k.cost > pts]), reward, setReward)}
+        onOk={async () => {
+          const r = rewards.find((k) => k.id === reward)!;
+          setBusy(true);
+          const res = await redeem(p.id, r);
+          setBusy(false);
+          toast(res.error ?? `Voucher ${res.code} gerado.`);
+        }}>
+        {pick(rewards.map((k) => [k.id, `${k.name} · ${k.cost} pts`, k.cost > pts]), reward, setReward)}
       </Sheet>
     </Screen>
   );

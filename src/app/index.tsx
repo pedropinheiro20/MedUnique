@@ -1,16 +1,19 @@
 import { Image } from 'expo-image';
 import { LinearGradient } from 'expo-linear-gradient';
-import { router } from 'expo-router';
+import { Redirect, router } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import { Image as RNImage, StyleSheet, Text, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { Button, Txt } from '@/components/ui';
+import { useAuth } from '@/state/auth';
 import { Fonts, MaxWidth } from '@/theme';
 
-// Tela de abertura: foto da clínica, título serifado e escolha do tipo de acesso.
+// Tela de abertura: foto da clínica, título serifado e entrada. Quem já entrou vai direto para a sua área.
 export default function Abertura() {
   const insets = useSafeAreaInsets();
+  const { ready, session, isStaff } = useAuth();
+  if (ready && session) return <Redirect href={isStaff ? '/clinica' : '/paciente'} />;
   return (
     <View style={styles.root}>
       <StatusBar style="light" />
@@ -31,8 +34,8 @@ export default function Abertura() {
       <View style={[styles.bottom, { paddingBottom: insets.bottom + 36 }]}>
         <Text style={styles.title}>Seu cuidado.{'\n'}Seu plano.{'\n'}Seu resultado.</Text>
         <Txt color="#D9CFCA">Clínica Med Unique · Saúde e Estética</Txt>
-        <Button label="Entrar como paciente" onPress={() => router.replace('/paciente')} style={{ backgroundColor: '#E5BEB6', paddingVertical: 16 }} />
-        <Button label="Sou da equipe da clínica" variant="ghostLight" onPress={() => router.replace('/clinica')} style={{ paddingVertical: 16 }} />
+        <Button label="Entrar" disabled={!ready} onPress={() => router.push('/entrar')} style={{ backgroundColor: '#E5BEB6', paddingVertical: 16 }} />
+        <Txt size={13} color="#BDB3AF" style={{ textAlign: 'center' }}>Pacientes e equipe entram com o e-mail cadastrado na clínica.</Txt>
       </View>
     </View>
   );

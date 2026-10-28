@@ -5,7 +5,6 @@ import { Pressable, ScrollView, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { Icon, Txt } from '@/components/ui';
-import { contract } from '@/data/mock';
 import { MaxWidth } from '@/theme';
 
 const PAGES = [
@@ -14,7 +13,7 @@ const PAGES = [
   require('@/assets/contrato/pagina-3.jpg'),
 ];
 
-// Leitor do contrato completo. No app final, o PDF de cada paciente vem da API (assinado e com código de verificação).
+// Leitor do contrato completo. Por enquanto mostra o modelo de contrato da clínica; o PDF de cada paciente entra no passo 6.
 export default function ContratoPdf() {
   const insets = useSafeAreaInsets();
   return (
@@ -25,8 +24,8 @@ export default function ContratoPdf() {
           <Icon name="back" size={18} color="#F7F2EF" />
         </Pressable>
         <View style={{ flex: 1 }}>
-          <Txt w="semibold" size={14} color="#F7F2EF" numberOfLines={1}>Contrato {contract.number}.pdf</Txt>
-          <Txt size={12} color="#BDB3AF">{contract.pages} páginas · assinado eletronicamente</Txt>
+          <Txt w="semibold" size={14} color="#F7F2EF" numberOfLines={1}>Contrato MedUnique.pdf</Txt>
+          <Txt size={12} color="#BDB3AF">{PAGES.length} páginas · modelo de exemplo</Txt>
         </View>
       </View>
       <ScrollView maximumZoomScale={3} contentContainerStyle={{ padding: 12, paddingBottom: insets.bottom + 24, gap: 14, alignItems: 'center' }}>

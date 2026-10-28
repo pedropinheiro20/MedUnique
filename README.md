@@ -1,6 +1,10 @@
 # MedUnique · app do paciente e da clínica (front-end)
 
-Protótipo de front-end em **Expo (React Native) + Expo Router + TypeScript**. Roda em iPhone, Android e navegador a partir do mesmo código. Ainda **não tem servidor**: todos os dados são de exemplo (`src/data/mock.ts`) e as ações ficam só na memória do app.
+App em **Expo (React Native) + Expo Router + TypeScript**, ligado ao servidor **Supabase** (projeto `medunique`, São Paulo). Roda em iPhone, Android e navegador a partir do mesmo código.
+
+- **Login:** e-mail + código de 6 dígitos (`src/app/entrar.tsx`). Quem está em `staff_invites` entra como equipe; o resto entra como paciente e é ligado ao cadastro com o mesmo e-mail.
+- **Dados e regras:** `src/state/store.tsx` (leitura e ações) e `supabase/migrations/` (tabelas, segurança e a regra dos créditos, que também roda no servidor).
+- **Versão web:** publicada pela Vercel (`vercel.json`).
 
 ## Como rodar
 

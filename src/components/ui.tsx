@@ -1,11 +1,14 @@
 import { router } from 'expo-router';
 import { createContext, ReactNode, useCallback, useContext, useRef, useState } from 'react';
 import {
-  Image, Modal, Pressable, ScrollView, StyleProp, StyleSheet, Text, TextProps, TextStyle, View, ViewStyle,
+  ActivityIndicator, Image, Modal, Pressable, ScrollView, StyleProp, StyleSheet, Text, TextProps, TextStyle, View, ViewStyle,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Svg, { Circle, Defs, LinearGradient, Path, Stop } from 'react-native-svg';
 
+import { initials } from '@/data/model';
+import { useAuth } from '@/state/auth';
+import { useStore } from '@/state/store';
 import { Fonts, MaxWidth, Radius, useColors } from '@/theme';
 
 // ---------- texto
@@ -151,7 +154,10 @@ export function Ring({ pct, size = 118, label, sub }: { pct: number; size?: numb
 export function Screen({ children, who, scroll = true }: { children: ReactNode; who: 'paciente' | 'clinica'; scroll?: boolean }) {
   const c = useColors();
   const insets = useSafeAreaInsets();
-  const [switching, setSwitching] = useState(false);
+  const { profile, isStaff, signOut } = useAuth();
+  const { me } = useStore();
+  const [menu, setMenu] = useState(false);
+  const canSwitch = isStaff && !!me;
   const header = (
     <Row between style={{ marginBottom: 18 }}>
       <Row style={{ gap: 10 }}>
@@ -163,8 +169,8 @@ export function Screen({ children, who, scroll = true }: { children: ReactNode; 
           <Txt w="semibold" size={10} color={c.muted} style={{ letterSpacing: 1.4 }}>SAÚDE E ESTÉTICA</Txt>
         </View>
       </Row>
-      <Pressable accessibilityLabel="Trocar acesso" onPress={() => setSwitching(true)}>
-        <Avatar ini={who === 'clinica' ? 'CR' : 'JP'} size={40} tone="noir" />
+      <Pressable accessibilityLabel="Minha conta" onPress={() => setMenu(true)}>
+        <Avatar ini={initials(profile?.full_name || me?.name || '?')} size={40} tone="noir" />
       </Pressable>
     </Row>
   );
@@ -178,14 +184,36 @@ export function Screen({ children, who, scroll = true }: { children: ReactNode; 
     <View style={{ flex: 1, backgroundColor: c.bg }}>
       {scroll ? <ScrollView keyboardShouldPersistTaps="handled">{body}</ScrollView> : body}
       <Sheet
-        visible={switching}
-        onClose={() => setSwitching(false)}
-        title="Trocar acesso"
-        text={`Você está vendo o app como ${who === 'clinica' ? 'equipe da clínica' : 'paciente'}. No app final, cada pessoa entra com o próprio login e só vê a área dela.`}
-        okLabel={who === 'clinica' ? 'Ver como paciente' : 'Ver como clínica'}
-        onOk={() => router.replace(who === 'clinica' ? '/paciente' : '/clinica')}
-      />
+        visible={menu}
+        onClose={() => setMenu(false)}
+        title="Minha conta"
+        eyebrow={profile?.full_name || undefined}
+        text={canSwitch
+          ? `Você está vendo o app como ${who === 'clinica' ? 'equipe da clínica' : 'paciente'}. Como você também tem um plano de paciente, pode alternar entre as duas áreas.`
+          : 'Você está conectada ao app MedUnique.'}>
+        {canSwitch ? (
+          <Button label={who === 'clinica' ? 'Ver como paciente' : 'Ver como clínica'} variant="dark"
+            onPress={() => { setMenu(false); router.replace(who === 'clinica' ? '/paciente' : '/clinica'); }} />
+        ) : null}
+        <Button label="Sair" variant="ghost" onPress={async () => { setMenu(false); await signOut(); router.replace('/'); }} />
+      </Sheet>
     </View>
+  );
+}
+
+// Carregando, erro ou vazio no lugar do conteúdo
+export function StateView({ who, loading, error, empty, onRetry }: {
+  who: 'paciente' | 'clinica'; loading?: boolean; error?: string | null; empty?: string; onRetry?: () => void;
+}) {
+  const c = useColors();
+  return (
+    <Screen who={who}>
+      <Card style={{ alignItems: 'center', paddingVertical: 32 }}>
+        {loading ? <ActivityIndicator color={c.wine} /> : null}
+        <Muted size={14} style={{ textAlign: 'center' }}>{loading ? 'Carregando…' : error ?? empty}</Muted>
+        {!loading && error && onRetry ? <Button label="Tentar de novo" small onPress={onRetry} /> : null}
+      </Card>
+    </Screen>
   );
 }
 
@@ -207,7 +235,7 @@ export function Sheet({ visible, onClose, title, eyebrow, text, children, okLabe
           {text ? <Muted size={14} style={{ lineHeight: 20 }}>{text}</Muted> : null}
           {children}
           <Row>
-            <Button label="Cancelar" variant="ghost" onPress={onClose} style={{ flex: 1 }} />
+            <Button label={onOk ? 'Cancelar' : 'Fechar'} variant="ghost" onPress={onClose} style={{ flex: 1 }} />
             {onOk ? <Button label={okLabel} disabled={okDisabled} onPress={() => { onClose(); onOk(); }} style={{ flex: 1 }} /> : null}
           </Row>
         </Pressable>

@@ -4,8 +4,8 @@ import { router } from 'expo-router';
 import { useState } from 'react';
 import { View } from 'react-native';
 
-import { BolState, boletos, brl, contract, fmt, num, plan, Step } from '@/data/mock';
-import { useStore } from '@/state/store';
+import { BolState, brl, fmt, num, Plan, Step } from '@/data/model';
+import { PlanInfo, useStore } from '@/state/store';
 import { useColors } from '@/theme';
 
 import { Button, Card, Chip, H3, Muted, Row, Sheet, Txt, useToast } from './ui';
@@ -20,21 +20,22 @@ export function stepChip(s: Step) {
   return <Chip label="Agendada" />;
 }
 
-export function CreditChip({ step }: { step: Step }) {
-  const { creditPlan } = useStore();
+export function CreditChip({ step, info }: { step: Step; info: PlanInfo }) {
   if (step.status === 'done') return null;
-  const c = creditPlan.get(step)!;
+  const c = info.creditPlan.get(step.id);
+  if (!c) return null;
   if (c.ok) return <Chip label="Liberada" tone="ok" />;
   if (c.first) return <Chip label={`Faltam ${num(c.need!)} créditos`} tone="late" />;
   return <Chip label="Aguardando pagamento" />;
 }
 
 // Créditos: cada R$ 1,00 pago vira 1 crédito, usado nas etapas do plano.
-export function CreditCard({ full }: { full?: boolean }) {
+export function CreditCard({ plan, info, full }: { plan: Plan; info: PlanInfo; full?: boolean }) {
   const c = useColors();
-  const { credits, creditsIn, creditsUsed, creditPlan, creditLedger, nextUnpaid } = useStore();
-  const liberadas = plan.steps.filter((s) => creditPlan.get(s)?.ok);
-  const bloqueada = plan.steps.find((s) => creditPlan.get(s) && !creditPlan.get(s)!.ok);
+  const { credits, creditsIn, creditsUsed, creditPlan, creditLedger, nextUnpaid } = info;
+  const total = Math.max(plan.total, creditsIn, 1);
+  const liberadas = plan.steps.filter((s) => creditPlan.get(s.id)?.ok);
+  const bloqueada = plan.steps.find((s) => creditPlan.get(s.id) && !creditPlan.get(s.id)!.ok);
   return (
     <Card>
       <Row between>
@@ -46,13 +47,13 @@ export function CreditCard({ full }: { full?: boolean }) {
         <Muted size={15}>disponíveis</Muted>
       </Row>
       <View style={{ height: 12, borderRadius: 12, backgroundColor: c.sunk, overflow: 'hidden' }}>
-        <View style={{ position: 'absolute', left: 0, top: 0, bottom: 0, width: `${(creditsIn / contract.total) * 100}%`, backgroundColor: c.nude }} />
-        <View style={{ position: 'absolute', left: 0, top: 0, bottom: 0, width: `${(creditsUsed / contract.total) * 100}%`, backgroundColor: c.noir }} />
+        <View style={{ position: 'absolute', left: 0, top: 0, bottom: 0, width: `${(creditsIn / total) * 100}%`, backgroundColor: c.nude }} />
+        <View style={{ position: 'absolute', left: 0, top: 0, bottom: 0, width: `${(creditsUsed / total) * 100}%`, backgroundColor: c.noir }} />
       </View>
       <Row style={{ flexWrap: 'wrap', gap: 14 }}>
         <Legend color={c.noir} label={`Usados ${num(creditsUsed)}`} />
         <Legend color={c.nude} label={`Pagos ${num(creditsIn)}`} />
-        <Legend color={c.sunk} label={`Plano ${num(contract.total)}`} />
+        <Legend color={c.sunk} label={`Plano ${num(plan.total)}`} />
       </Row>
       <View style={{ backgroundColor: c.sunk, borderRadius: 14, padding: 14, gap: 4 }}>
         <Txt size={14}>
@@ -63,7 +64,7 @@ export function CreditCard({ full }: { full?: boolean }) {
         {bloqueada ? (
           <Txt size={14}>
             <Txt w="bold" size={14}>A liberar: </Txt>
-            {bloqueada.title}. Faltam {num(creditPlan.get(bloqueada)!.need!)} créditos
+            {bloqueada.title}. Faltam {num(creditPlan.get(bloqueada.id)!.need!)} créditos
             {nextUnpaid ? `, que entram com o pagamento do boleto de ${fmt(nextUnpaid.due)}` : ''}.
           </Txt>
         ) : null}
@@ -97,11 +98,13 @@ function Legend({ color, label }: { color: string; label: string }) {
   );
 }
 
-export function BoletoCard() {
+export function BoletoCard({ plan, info }: { plan: Plan; info: PlanInfo }) {
   const c = useColors();
   const toast = useToast();
-  const { nextBoleto: nb, boletoStatus, daysTo, paidOf, paidCount, set } = useStore();
-  const [proofFor, setProofFor] = useState<number | null>(null);
+  const { sendProof } = useStore();
+  const { nextBoleto: nb, boletoStatus, daysTo, paidCount } = info;
+  const boletos = plan.boletos;
+  const [proofFor, setProofFor] = useState<string | null>(null);
   const [file, setFile] = useState<string | null>(null);
   const stt = nb ? boletoStatus(nb) : null;
 
@@ -130,35 +133,35 @@ export function BoletoCard() {
             </Muted>
           </View>
           {stt === 'analise' ? (
-            <Muted size={14}>Recebemos seu comprovante. A compensação leva até 3 dias úteis e o status muda aqui sozinho.</Muted>
+            <Muted size={14}>Recebemos seu comprovante. A equipe confere e o status muda aqui sozinho.</Muted>
           ) : (
             <>
-              <View style={{ backgroundColor: c.surface, borderRadius: 10, borderWidth: 1, borderStyle: 'dashed', borderColor: c.line, padding: 12 }}>
-                <Txt size={13} selectable>{nb.code}</Txt>
-              </View>
+              {nb.code ? (
+                <View style={{ backgroundColor: c.surface, borderRadius: 10, borderWidth: 1, borderStyle: 'dashed', borderColor: c.line, padding: 12 }}>
+                  <Txt size={13} selectable>{nb.code}</Txt>
+                </View>
+              ) : <Muted size={14}>A clínica ainda vai anexar o código deste boleto.</Muted>}
               <Row style={{ flexWrap: 'wrap', gap: 8 }}>
-                <Button label="Copiar código" small onPress={async () => { await Clipboard.setStringAsync(nb.code); toast('Código copiado. Cole no app do seu banco.'); }} />
-                <Button label="Ver boleto" small variant="ghost" onPress={() => toast('No app final, o PDF do boleto abre aqui.')} />
-                <Button label="Já paguei" small variant="ghost" onPress={() => { setFile(null); setProofFor(nb.n); }} />
+                {nb.code ? <Button label="Copiar código" small onPress={async () => { await Clipboard.setStringAsync(nb.code!); toast('Código copiado. Cole no app do seu banco.'); }} /> : null}
+                <Button label="Já paguei" small variant="ghost" onPress={() => { setFile(null); setProofFor(nb.id); }} />
               </Row>
             </>
           )}
         </View>
-      ) : (
+      ) : boletos.length ? (
         <Chip label="Todas as parcelas foram pagas" tone="ok" />
-      )}
+      ) : <Muted>Nenhum boleto lançado ainda.</Muted>}
       <View>
         {boletos.map((b, i) => {
           const s = boletoStatus(b);
-          const pd = paidOf(b);
           return (
-            <Row key={b.n} style={{ paddingVertical: 10, borderTopWidth: i ? 1 : 0, borderTopColor: c.line, gap: 10 }}>
+            <Row key={b.id} style={{ paddingVertical: 10, borderTopWidth: i ? 1 : 0, borderTopColor: c.line, gap: 10 }}>
               <View style={{ width: 28, height: 28, borderRadius: 14, backgroundColor: c.sunk, alignItems: 'center', justifyContent: 'center' }}>
                 <Txt w="bold" size={11} color={c.muted}>{b.n === 1 ? 'E' : String(b.n - 1).padStart(2, '0')}</Txt>
               </View>
               <View style={{ flex: 1 }}>
                 <Txt w="semibold" size={14}>{fmt(b.due)} · {brl(b.value)}</Txt>
-                <Muted size={12}>{pd ? `Pago em ${fmt(pd)}` : s === 'futuro' ? 'Disponível 10 dias antes' : 'Aguardando pagamento'}</Muted>
+                <Muted size={12}>{b.paidAt ? `Pago em ${fmt(b.paidAt)}` : s === 'futuro' ? 'Disponível 10 dias antes' : 'Aguardando pagamento'}</Muted>
               </View>
               <Chip label={BOL_LABEL[s][0]} tone={BOL_LABEL[s][1]} />
             </Row>
@@ -169,10 +172,10 @@ export function BoletoCard() {
         visible={proofFor !== null}
         onClose={() => setProofFor(null)}
         title="Enviar comprovante"
-        text="Envie a foto ou o PDF do comprovante. A equipe financeira confere e o boleto aparece como pago após a compensação."
+        text="Envie a foto ou o PDF do comprovante. A equipe financeira confere e dá baixa no boleto."
         okLabel="Enviar"
         okDisabled={!file}
-        onOk={() => { const n = proofFor!; set((s) => ({ ...s, proof: { ...s.proof, [n]: true } })); toast('Comprovante enviado para a equipe financeira.'); }}>
+        onOk={async () => { const e = await sendProof(proofFor!); toast(e ?? 'Comprovante enviado para a equipe financeira.'); }}>
         <Button label={file ? `Arquivo: ${file}` : 'Escolher arquivo'} variant="ghost" onPress={pick} />
       </Sheet>
     </Card>

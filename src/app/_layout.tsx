@@ -6,6 +6,7 @@ import { StatusBar } from 'expo-status-bar';
 import { useEffect } from 'react';
 
 import { ToastProvider } from '@/components/ui';
+import { AuthProvider } from '@/state/auth';
 import { StoreProvider } from '@/state/store';
 import { useColors } from '@/theme';
 
@@ -22,17 +23,20 @@ export default function RootLayout() {
   if (!loaded) return null;
 
   return (
-    <StoreProvider>
-      <ToastProvider>
-        <StatusBar style="auto" />
-        <Stack screenOptions={{ headerShown: false, contentStyle: { backgroundColor: c.bg } }}>
-          <Stack.Screen name="index" />
-          <Stack.Screen name="paciente" />
-          <Stack.Screen name="clinica" />
-          <Stack.Screen name="ficha/[id]" />
-          <Stack.Screen name="contrato-pdf" options={{ presentation: 'modal' }} />
-        </Stack>
-      </ToastProvider>
-    </StoreProvider>
+    <AuthProvider>
+      <StoreProvider>
+        <ToastProvider>
+          <StatusBar style="auto" />
+          <Stack screenOptions={{ headerShown: false, contentStyle: { backgroundColor: c.bg } }}>
+            <Stack.Screen name="index" />
+            <Stack.Screen name="entrar" />
+            <Stack.Screen name="paciente" />
+            <Stack.Screen name="clinica" />
+            <Stack.Screen name="ficha/[id]" />
+            <Stack.Screen name="contrato-pdf" options={{ presentation: 'modal' }} />
+          </Stack>
+        </ToastProvider>
+      </StoreProvider>
+    </AuthProvider>
   );
 }
