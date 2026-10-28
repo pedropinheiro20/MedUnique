@@ -1,5 +1,6 @@
 import type { Session } from '@supabase/supabase-js';
 import { createContext, ReactNode, useContext, useEffect, useState } from 'react';
+import { Platform } from 'react-native';
 
 import { supabase } from '@/lib/supabase';
 
@@ -53,7 +54,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     profile,
     isStaff: !!profile && profile.role !== 'patient',
     sendCode: async (email) => {
-      const { error } = await supabase.auth.signInWithOtp({ email: email.trim().toLowerCase(), options: { shouldCreateUser: true } });
+      const { error } = await supabase.auth.signInWithOtp({ email: email.trim().toLowerCase(), options: {
+        shouldCreateUser: true,
+        // O link do e-mail volta para o mesmo endereço do app (web)
+        emailRedirectTo: Platform.OS === 'web' && typeof window !== 'undefined' ? window.location.origin : undefined,
+      } });
       return msg(error);
     },
     verifyCode: async (email, code) => {

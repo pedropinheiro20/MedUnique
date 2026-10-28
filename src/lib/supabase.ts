@@ -12,6 +12,7 @@ export const supabase = createClient(SUPABASE_URL, SUPABASE_KEY, {
     storage: Platform.OS === 'web' ? undefined : AsyncStorage,
     autoRefreshToken: true,
     persistSession: true,
-    detectSessionInUrl: false,
+    // Na versão web, a pessoa entra tocando no link do e-mail: o app lê o acesso que vem no endereço.
+    detectSessionInUrl: Platform.OS === 'web',
   },
 });

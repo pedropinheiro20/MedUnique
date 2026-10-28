@@ -7,7 +7,7 @@ import { Button, Card, H1, Muted, Txt } from '@/components/ui';
 import { useAuth } from '@/state/auth';
 import { Fonts, MaxWidth, useColors } from '@/theme';
 
-// Login sem senha: a pessoa digita o e-mail e recebe um código de 6 dígitos.
+// Login sem senha: a pessoa digita o e-mail e entra pelo link do e-mail ou pelo código de 6 dígitos.
 export default function Entrar() {
   const c = useColors();
   const insets = useSafeAreaInsets();
@@ -46,10 +46,10 @@ export default function Entrar() {
             onPress={() => (sent ? setSent(false) : router.canGoBack() ? router.back() : router.replace('/'))} />
           <Image source={require('@/assets/images/logo-mark.png')} style={{ width: 52, height: 52 }} />
           <View style={{ gap: 6 }}>
-            <H1>{sent ? 'Digite o código' : 'Entrar'}</H1>
+            <H1>{sent ? 'Confira seu e-mail' : 'Entrar'}</H1>
             <Muted size={15}>
-              {sent ? `Enviamos um código para ${email.trim().toLowerCase()}. Ele chega em até 1 minuto. Confira também o spam.`
-                : 'Use o e-mail que você informou à clínica. Vamos enviar um código para confirmar que é você.'}
+              {sent ? `Enviamos um e-mail para ${email.trim().toLowerCase()}. Toque no link do e-mail neste aparelho para entrar, ou digite abaixo o código, se ele vier no e-mail. Chega em até 1 minuto; confira também o spam.`
+                : 'Use o e-mail que você informou à clínica. Vamos enviar um e-mail para confirmar que é você.'}
             </Muted>
           </View>
           <Card style={{ gap: 14 }}>
@@ -77,7 +77,7 @@ export default function Entrar() {
                 <Button label="Reenviar código" variant="ghost" small disabled={busy} onPress={send} />
               </>
             ) : (
-              <Button label={busy ? 'Enviando…' : 'Receber código'} disabled={busy || !validEmail} onPress={send} />
+              <Button label={busy ? 'Enviando…' : 'Enviar e-mail de acesso'} disabled={busy || !validEmail} onPress={send} />
             )}
           </Card>
         </View>
