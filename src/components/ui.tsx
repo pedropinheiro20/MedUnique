@@ -1,7 +1,7 @@
 import { router } from 'expo-router';
 import { createContext, ReactNode, useCallback, useContext, useRef, useState } from 'react';
 import {
-  ActivityIndicator, Image, Modal, Pressable, ScrollView, StyleProp, StyleSheet, Text, TextProps, TextStyle, View, ViewStyle,
+  ActivityIndicator, Image, Modal, Pressable, ScrollView, StyleProp, StyleSheet, Text, TextInput, TextProps, TextStyle, View, ViewStyle,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Svg, { Circle, Defs, LinearGradient, Path, Stop } from 'react-native-svg';
@@ -154,9 +154,12 @@ export function Ring({ pct, size = 118, label, sub }: { pct: number; size?: numb
 export function Screen({ children, who, scroll = true }: { children: ReactNode; who: 'paciente' | 'clinica'; scroll?: boolean }) {
   const c = useColors();
   const insets = useSafeAreaInsets();
-  const { profile, isStaff, signOut } = useAuth();
+  const { profile, isStaff, signOut, changePassword } = useAuth();
   const { me } = useStore();
+  const toast = useToast();
   const [menu, setMenu] = useState(false);
+  const [pwOpen, setPwOpen] = useState(false);
+  const [pw, setPw] = useState('');
   const canSwitch = isStaff && !!me;
   const header = (
     <Row between style={{ marginBottom: 18 }}>
@@ -195,7 +198,16 @@ export function Screen({ children, who, scroll = true }: { children: ReactNode; 
           <Button label={who === 'clinica' ? 'Ver como paciente' : 'Ver como clínica'} variant="dark"
             onPress={() => { setMenu(false); router.replace(who === 'clinica' ? '/paciente' : '/clinica'); }} />
         ) : null}
+        <Button label="Criar ou trocar senha" variant="ghost" onPress={() => { setMenu(false); setPw(''); setPwOpen(true); }} />
         <Button label="Sair" variant="ghost" onPress={async () => { setMenu(false); await signOut(); router.replace('/'); }} />
+      </Sheet>
+      <Sheet visible={pwOpen} onClose={() => setPwOpen(false)} title="Criar ou trocar senha"
+        text="Escolha uma senha com pelo menos 6 caracteres. Use ela para entrar no app junto com o seu e-mail."
+        okLabel="Salvar senha" okDisabled={pw.length < 6}
+        onOk={async () => { const e = await changePassword(pw); setPwOpen(false); toast(e ?? 'Senha salva.'); }}>
+        <TextInput value={pw} onChangeText={setPw} secureTextEntry autoCapitalize="none" placeholder="Nova senha"
+          accessibilityLabel="Nova senha" textContentType="newPassword" autoComplete="new-password" placeholderTextColor={c.muted}
+          style={{ backgroundColor: c.sunk, borderRadius: 14, paddingVertical: 14, paddingHorizontal: 16, fontFamily: Fonts.regular, fontSize: 17, color: c.ink }} />
       </Sheet>
     </View>
   );

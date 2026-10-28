@@ -12,8 +12,11 @@ type Auth = {
   session: Session | null;
   profile: Profile | null;
   isStaff: boolean;
+  signIn: (email: string, password: string) => Promise<string | null>;
+  signUp: (email: string, password: string, accessCode: string) => Promise<string | null>;
   sendCode: (email: string) => Promise<string | null>;
   verifyCode: (email: string, code: string) => Promise<string | null>;
+  changePassword: (password: string) => Promise<string | null>;
   signOut: () => Promise<void>;
 };
 
@@ -23,6 +26,13 @@ const Ctx = createContext<Auth | null>(null);
 function msg(e: { message: string; status?: number } | null) {
   if (!e) return null;
   if (e.status === 429 || /rate limit|security purposes/i.test(e.message)) return 'Muitas tentativas. Aguarde um minuto e tente de novo.';
+  if (/invalid login credentials/i.test(e.message)) return 'E-mail ou senha incorretos.';
+  if (/already registered|already exists/i.test(e.message)) return 'Este e-mail já tem cadastro. Use Entrar.';
+  if (/password/i.test(e.message)) return 'A senha precisa ter pelo menos 6 caracteres.';
+  if (/database error|código de acesso/i.test(e.message)) return 'Confira o e-mail e o código de acesso que a clínica te passou.';
+  if (/not allowed|signups? not allowed|otp_disabled/i.test(e.message)) return 'Este e-mail ainda não tem cadastro. Use Criar conta.';
+  if (/sending confirmation|confirmation email/i.test(e.message)) return 'Cadastro indisponível no momento. Fale com a clínica.';
+  if (/email not confirmed/i.test(e.message)) return 'Seu cadastro ainda não foi liberado. Fale com a clínica.';
   if (/expired|invalid/i.test(e.message)) return 'Código inválido ou vencido. Peça um novo código.';
   if (/email/i.test(e.message)) return 'Confira o e-mail digitado.';
   return 'Não foi possível entrar agora. Tente de novo em instantes.';
@@ -53,9 +63,22 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     session,
     profile,
     isStaff: !!profile && profile.role !== 'patient',
+    signIn: async (email, password) => {
+      const { error } = await supabase.auth.signInWithPassword({ email: email.trim().toLowerCase(), password });
+      return msg(error);
+    },
+    signUp: async (email, password, accessCode) => {
+      // O código de acesso é conferido no servidor junto com o e-mail cadastrado pela clínica
+      const { data, error } = await supabase.auth.signUp({
+        email: email.trim().toLowerCase(), password, options: { data: { access_code: accessCode.trim() } },
+      });
+      if (error) return msg(error);
+      if (!data.session) return 'Conta criada, mas falta liberar o acesso. Fale com a clínica.';
+      return null;
+    },
     sendCode: async (email) => {
       const { error } = await supabase.auth.signInWithOtp({ email: email.trim().toLowerCase(), options: {
-        shouldCreateUser: true,
+        shouldCreateUser: false,
         // O link do e-mail volta para o mesmo endereço do app (web)
         emailRedirectTo: Platform.OS === 'web' && typeof window !== 'undefined' ? window.location.origin : undefined,
       } });
@@ -63,6 +86,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     },
     verifyCode: async (email, code) => {
       const { error } = await supabase.auth.verifyOtp({ email: email.trim().toLowerCase(), token: code.trim(), type: 'email' });
+      return msg(error);
+    },
+    changePassword: async (password) => {
+      const { error } = await supabase.auth.updateUser({ password });
       return msg(error);
     },
     signOut: async () => { await supabase.auth.signOut(); },

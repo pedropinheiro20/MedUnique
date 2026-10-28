@@ -51,6 +51,7 @@ export type Patient = {
   email: string | null;
   phone: string | null;
   since: Date;
+  accessCode: string; // código de 6 dígitos para criar a conta no app
 };
 
 export type Reward = { id: string; name: string; cost: number };

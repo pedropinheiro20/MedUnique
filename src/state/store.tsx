@@ -71,7 +71,7 @@ export type PlanInfo = ReturnType<typeof planInfo>;
 function build(raw: Raw) {
   const patients: Patient[] = raw.patients.map((r) => ({
     id: r.id, profileId: r.profile_id, name: r.full_name, ini: initials(r.full_name),
-    email: r.email, phone: r.phone, since: new Date(r.created_at),
+    email: r.email, phone: r.phone, since: new Date(r.created_at), accessCode: r.access_code ?? '',
   })).sort((a, b) => a.name.localeCompare(b.name));
 
   const plans: Plan[] = raw.plans.map((r) => {

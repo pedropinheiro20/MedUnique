@@ -63,6 +63,13 @@ export default function Ficha() {
         {p.email ? <Muted size={13}>{p.email}{p.profileId ? ' · já entrou no app' : ' · ainda não entrou no app'}</Muted> : null}
       </View>
 
+      {p.email && !p.profileId && p.accessCode ? (
+        <Card style={{ gap: 6 }}>
+          <Row between><H3>Código de acesso</H3><Txt w="bold" size={22} color={c.wine} style={{ letterSpacing: 4 }}>{p.accessCode}</Txt></Row>
+          <Muted size={14}>Passe este código para {firstName(p.name)}. No app, ela toca em Entrar, depois em "Primeiro acesso? Criar conta", e informa o e-mail {p.email}, o código e uma senha.</Muted>
+        </Card>
+      ) : null}
+
       <Card dark>
         <Txt size={12} color={c.onNoir} style={{ opacity: 0.65 }}>{plan ? plan.name : 'Sem plano ativo'}</Txt>
         <View style={{ flexDirection: 'row', flexWrap: 'wrap' }}>

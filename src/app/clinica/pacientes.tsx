@@ -40,7 +40,7 @@ export default function Pacientes() {
     const r = await createPatient({ name, email, phone });
     if (r.error) { toast(r.error); return; }
     setName(''); setEmail(''); setPhone('');
-    toast('Paciente cadastrada. Ela já pode entrar no app com esse e-mail.');
+    toast('Paciente cadastrada. Passe para ela o código de acesso que aparece na ficha.');
     router.push(`/ficha/${r.id}`);
   };
 
