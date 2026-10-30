@@ -194,8 +194,6 @@ export function StoreProvider({ children }: { children: ReactNode }) {
       registerStep: async (stepId, patientId) => {
         const { error: e } = await supabase.from('plan_steps').update({ status: 'done' }).eq('id', stepId);
         if (e) return errText(e);
-        // cada sessão realizada rende 50 pontos de fidelidade
-        await supabase.from('points_ledger').insert({ patient_id: patientId, delta: 50, reason: 'Sessão realizada', created_by: uid });
         await reload();
         return null;
       },

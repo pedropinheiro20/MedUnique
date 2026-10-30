@@ -117,8 +117,8 @@ export default function Ficha() {
 
       {n ? (
         <Sheet visible={sheet === 'register'} onClose={() => setSheet(null)} title="Registrar procedimento" eyebrow={p.name}
-          text={`Marcar "${n.title}" como realizado. Serão usados ${num(n.price)} créditos e ${firstName(p.name)} ganha 50 pontos.`}
-          okLabel="Registrar" onOk={() => run(() => registerStep(n.id, p.id), `Procedimento registrado. ${num(n.price)} créditos usados e +50 pontos.`)} />
+          text={`Marcar "${n.title}" como realizado. Serão usados ${num(n.price)} créditos.`}
+          okLabel="Registrar" onOk={() => run(() => registerStep(n.id, p.id), `Procedimento registrado. ${num(n.price)} créditos usados.`)} />
       ) : null}
       <Sheet visible={sheet === 'nocred'} onClose={() => setSheet(null)} title="Créditos insuficientes"
         text={`${p.name} tem ${num(info?.credits ?? 0)} créditos, menos do que o procedimento custa. Regularize o pagamento antes de realizar a sessão.`}
