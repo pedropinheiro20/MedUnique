@@ -136,7 +136,7 @@ export default function Ficha() {
           setBusy(false);
           toast(res.error ?? `Voucher ${res.code} gerado.`);
         }}>
-        {pick(rewards.map((k) => [k.id, `${k.name} · ${k.cost} pts`, k.cost > pts]), reward, setReward)}
+        {pick(rewards.map((k) => [k.id, `${k.name} · ${num(k.cost)} pts`, k.cost > pts]), reward, setReward)}
       </Sheet>
     </Screen>
   );

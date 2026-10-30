@@ -2,7 +2,7 @@ import { View } from 'react-native';
 
 import { ListRow } from '@/components/clinic';
 import { Button, Card, Chip, H2, H3, Muted, Row, Screen, Txt, useToast } from '@/components/ui';
-import { fmt } from '@/data/model';
+import { fmt, num } from '@/data/model';
 import { useStore } from '@/state/store';
 import { useColors } from '@/theme';
 
@@ -25,7 +25,7 @@ export default function Resgates() {
       </View>
       <Card style={{ gap: 8 }}>
         <H3>Catálogo de recompensas</H3>
-        {rewards.map((k) => <Row between key={k.id}><Txt size={14}>{k.name}</Txt><Txt w="bold" size={14} color={c.wine}>{k.cost} pts</Txt></Row>)}
+        {rewards.map((k) => <Row between key={k.id}><Txt size={14}>{k.name}</Txt><Txt w="bold" size={14} color={c.wine}>{num(k.cost)} pts</Txt></Row>)}
         <Muted size={12}>Para mudar o catálogo, me envie as recompensas e os pontos de cada uma.</Muted>
       </Card>
     </Screen>
