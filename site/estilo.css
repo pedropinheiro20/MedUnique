@@ -117,7 +117,7 @@ p { margin: 0 0 1em; }
 /* Topo */
 .topo {
   position: sticky;
-  top: 0;
+  top: env(safe-area-inset-top, 0px);
   z-index: 50;
   background: rgba(239, 231, 227, 0.88);
   backdrop-filter: saturate(140%) blur(12px);
@@ -577,8 +577,8 @@ p { margin: 0 0 1em; }
 [data-a-confirmar] { outline: 1px dashed var(--rosa); outline-offset: 4px; }
 
 /* Animação ao rolar */
-.anima .aparece { opacity: 0; transform: translateY(24px); transition: opacity .9s ease, transform .9s ease; }
-.anima .aparece.visivel { opacity: 1; transform: none; }
+.anima .aparece { transform: translateY(16px); transition: transform .9s ease; }
+.anima .aparece.visivel { transform: none; }
 
 /* Tablet */
 @media (max-width: 1080px) {
