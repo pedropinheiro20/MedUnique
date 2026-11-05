@@ -9,7 +9,7 @@ import Svg, { Circle, Defs, LinearGradient, Path, Stop } from 'react-native-svg'
 import { initials } from '@/data/model';
 import { useAuth } from '@/state/auth';
 import { useStore } from '@/state/store';
-import { Fonts, MaxWidth, Radius, useColors } from '@/theme';
+import { Fonts, MaxWidth, Radius, useColors, useWide, WideWidth } from '@/theme';
 
 // ---------- texto
 type TxtProps = TextProps & { w?: keyof typeof Fonts; size?: number; color?: string; style?: StyleProp<TextStyle> };
@@ -37,6 +37,7 @@ const ICONS = {
   chevron: 'M9 6l6 6-6 6',
   back: 'M15 6l-6 6 6 6',
   check: 'M5 12.5l4.5 4.5L19 7.5',
+  key: 'M15.5 3a5.5 5.5 0 1 0 0 11 5.5 5.5 0 0 0 0-11zM11.6 12.4L3 21M6 18l2.5 2.5M8.5 15.5L11 18',
 };
 export type IconName = keyof typeof ICONS;
 export function Icon({ name, size = 22, color, stroke = 1.8 }: { name: IconName; size?: number; color?: string; stroke?: number }) {
@@ -150,6 +151,16 @@ export function Ring({ pct, size = 118, label, sub }: { pct: number; size?: numb
   );
 }
 
+// Colunas lado a lado no computador; uma embaixo da outra no celular
+export function Cols({ children, style }: { children: ReactNode; style?: StyleProp<ViewStyle> }) {
+  const wide = useWide();
+  if (!wide) return <View style={[{ gap: 16 }, style]}>{children}</View>;
+  return <View style={[{ flexDirection: 'row', alignItems: 'flex-start', gap: 20 }, style]}>{children}</View>;
+}
+export function Col({ children, style }: { children: ReactNode; style?: StyleProp<ViewStyle> }) {
+  return <View style={[{ flex: 1, minWidth: 0, gap: 16 }, style]}>{children}</View>;
+}
+
 // ---------- tela com cabeçalho da marca
 export function Screen({ children, who, scroll = true }: { children: ReactNode; who: 'paciente' | 'clinica'; scroll?: boolean }) {
   const c = useColors();
@@ -160,10 +171,12 @@ export function Screen({ children, who, scroll = true }: { children: ReactNode; 
   const [menu, setMenu] = useState(false);
   const [pwOpen, setPwOpen] = useState(false);
   const [pw, setPw] = useState('');
+  const wide = useWide();
   const canSwitch = isStaff && !!me;
+  const isAdmin = profile?.role === 'admin';
   const header = (
-    <Row between style={{ marginBottom: 18 }}>
-      <Row style={{ gap: 10 }}>
+    <Row between style={{ marginBottom: wide ? 4 : 18 }}>
+      {wide ? <View /> : <Row style={{ gap: 10 }}>
         <Image source={require('@/assets/images/logo-mark.png')} style={{ width: 40, height: 40 }} />
         <View>
           <Text style={{ fontFamily: Fonts.regular, fontSize: 21, color: c.ink }}>
@@ -171,14 +184,15 @@ export function Screen({ children, who, scroll = true }: { children: ReactNode; 
           </Text>
           <Txt w="semibold" size={10} color={c.muted} style={{ letterSpacing: 1.4 }}>SAÚDE E ESTÉTICA</Txt>
         </View>
-      </Row>
-      <Pressable accessibilityLabel="Minha conta" onPress={() => setMenu(true)}>
+      </Row>}
+      <Pressable accessibilityLabel="Minha conta" onPress={() => setMenu(true)} style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
+        {wide ? <Txt w="medium" size={14} color={c.muted}>Minha conta</Txt> : null}
         <Avatar ini={initials(profile?.full_name || me?.name || '?')} size={40} tone="noir" />
       </Pressable>
     </Row>
   );
   const body = (
-    <View style={{ width: '100%', maxWidth: MaxWidth, alignSelf: 'center', paddingHorizontal: 16, paddingTop: insets.top + 12, paddingBottom: 32, gap: 16 }}>
+    <View style={{ width: '100%', maxWidth: wide ? WideWidth[who] : MaxWidth, alignSelf: 'center', paddingHorizontal: wide ? 40 : 16, paddingTop: insets.top + (wide ? 28 : 12), paddingBottom: wide ? 48 : 32, gap: wide ? 20 : 16 }}>
       {header}
       {children}
     </View>
@@ -192,17 +206,20 @@ export function Screen({ children, who, scroll = true }: { children: ReactNode; 
         title="Minha conta"
         eyebrow={profile?.full_name || undefined}
         text={canSwitch
-          ? `Você está vendo o app como ${who === 'clinica' ? 'equipe da clínica' : 'paciente'}. Como você também tem um plano de paciente, pode alternar entre as duas áreas.`
-          : 'Você está conectada ao app MedUnique.'}>
+          ? `Você está vendo o sistema como ${who === 'clinica' ? 'equipe da clínica' : 'paciente'}. Como você também tem um plano de paciente, pode alternar entre as duas áreas.`
+          : 'Você está conectada ao sistema MedUnique.'}>
         {canSwitch ? (
           <Button label={who === 'clinica' ? 'Ver como paciente' : 'Ver como clínica'} variant="dark"
             onPress={() => { setMenu(false); router.replace(who === 'clinica' ? '/paciente' : '/clinica'); }} />
+        ) : null}
+        {isAdmin && who === 'clinica' && !wide ? (
+          <Button label="Equipe e acessos" variant="ghost" onPress={() => { setMenu(false); router.navigate('/clinica/equipe'); }} />
         ) : null}
         <Button label="Criar ou trocar senha" variant="ghost" onPress={() => { setMenu(false); setPw(''); setPwOpen(true); }} />
         <Button label="Sair" variant="ghost" onPress={async () => { setMenu(false); await signOut(); router.replace('/'); }} />
       </Sheet>
       <Sheet visible={pwOpen} onClose={() => setPwOpen(false)} title="Criar ou trocar senha"
-        text="Escolha uma senha com pelo menos 6 caracteres. Use ela para entrar no app junto com o seu e-mail."
+        text="Escolha uma senha com pelo menos 6 caracteres. Use ela para entrar no sistema junto com o seu e-mail."
         okLabel="Salvar senha" okDisabled={pw.length < 6}
         onOk={async () => { const e = await changePassword(pw); setPwOpen(false); toast(e ?? 'Senha salva.'); }}>
         <TextInput value={pw} onChangeText={setPw} secureTextEntry autoCapitalize="none" placeholder="Nova senha"
@@ -236,12 +253,15 @@ export function Sheet({ visible, onClose, title, eyebrow, text, children, okLabe
 }) {
   const c = useColors();
   const insets = useSafeAreaInsets();
+  const wide = useWide();
   return (
     <Modal visible={visible} transparent animationType="fade" onRequestClose={onClose}>
-      <Pressable style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.45)', justifyContent: 'flex-end' }} onPress={onClose}>
+      <Pressable style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.45)', justifyContent: wide ? 'center' : 'flex-end', padding: wide ? 24 : 0 }} onPress={onClose}>
         <Pressable
           onPress={() => {}}
-          style={{ backgroundColor: c.surface, borderTopLeftRadius: 22, borderTopRightRadius: 22, padding: 22, paddingBottom: 22 + insets.bottom, gap: 14, width: '100%', maxWidth: MaxWidth, alignSelf: 'center' }}>
+          style={wide
+            ? { backgroundColor: c.surface, borderRadius: 22, padding: 28, gap: 14, width: '100%', maxWidth: 520, alignSelf: 'center' }
+            : { backgroundColor: c.surface, borderTopLeftRadius: 22, borderTopRightRadius: 22, padding: 22, paddingBottom: 22 + insets.bottom, gap: 14, width: '100%', maxWidth: MaxWidth, alignSelf: 'center' }}>
           {eyebrow ? <Muted size={12}>{eyebrow}</Muted> : null}
           <H2>{title}</H2>
           {text ? <Muted size={14} style={{ lineHeight: 20 }}>{text}</Muted> : null}

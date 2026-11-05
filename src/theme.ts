@@ -1,4 +1,4 @@
-import { useColorScheme } from 'react-native';
+import { useColorScheme, useWindowDimensions } from 'react-native';
 
 // Paleta do modelo de referência (bege-rosado, quase preto e nude) com o símbolo da logo MedUnique.
 const light = {
@@ -53,3 +53,10 @@ export const Fonts = {
 
 export const Radius = { card: 22, pill: 999, sm: 14 };
 export const MaxWidth = 480;
+
+// Computador ou tablet deitado: menu lateral e telas mais largas
+export const WideBreakpoint = 900;
+export function useWide() {
+  return useWindowDimensions().width >= WideBreakpoint;
+}
+export const WideWidth = { clinica: 1080, paciente: 760 };

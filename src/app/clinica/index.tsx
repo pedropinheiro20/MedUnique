@@ -2,14 +2,15 @@ import { router } from 'expo-router';
 import { View } from 'react-native';
 
 import { ListRow, NoCredit, useClinicAgenda, useSummaries } from '@/components/clinic';
-import { Button, Card, Chip, H1, H3, Icon, Muted, Row, Screen, StateView, Txt } from '@/components/ui';
+import { Button, Card, Chip, Col, Cols, H1, H3, Icon, Muted, Row, Screen, StateView, Txt } from '@/components/ui';
 import { brl, firstName, MESF, Step, today, WDF } from '@/data/model';
 import { useAuth } from '@/state/auth';
 import { useStore } from '@/state/store';
-import { useColors } from '@/theme';
+import { useColors, useWide } from '@/theme';
 
 export default function Painel() {
   const c = useColors();
+  const wide = useWide();
   const { profile } = useAuth();
   const { plans, vouchers, pById, loading, error, reload, patients } = useStore();
   const { all, one } = useSummaries();
@@ -27,7 +28,7 @@ export default function Painel() {
 
   const attention: { id: string; text: string; go: () => void }[] = [];
   all.forEach((x) => {
-    if (x.info?.nextStep && !x.credOk) attention.push({ id: x.p.id, text: `Sem créditos para a próxima sessão${x.next ? ` (${x.next})` : ''}`, go: () => router.push(`/ficha/${x.p.id}`) });
+    if (x.info?.nextStep && !x.credOk) attention.push({ id: x.p.id, text: `Sem créditos para a próxima sessão${x.next ? ` (${x.next})` : ''}`, go: () => router.push(`/clinica/ficha/${x.p.id}`) });
     if (x.bol.s === 'vencido') attention.push({ id: x.p.id, text: `Boleto vencido · ${x.bol.info}`, go: () => router.navigate('/clinica/financeiro') });
     if (x.bol.s === 'analise') attention.push({ id: x.p.id, text: 'Comprovante de boleto para conferir', go: () => router.navigate('/clinica/financeiro') });
   });
@@ -68,18 +69,24 @@ export default function Painel() {
         </Row>
       </Card>
 
+      <Cols>
+      <Col>
       <Row between><H3>Precisa de atenção</H3><Chip label={String(attention.length)} tone={attention.length ? 'late' : 'ok'} /></Row>
       <View style={{ gap: 10 }}>
         {attention.length
           ? attention.map((a, i) => { const p = pById(a.id); return <ListRow key={i} patient={p} title={p?.name ?? 'Paciente'} detail={a.text} onPress={a.go} />; })
           : <Card><Muted>Tudo em dia por aqui.</Muted></Card>}
       </View>
+      </Col>
+      <Col>
 
       <Row between><H3>Atendimentos de hoje</H3><Button label="Ver agenda" variant="ghost" small onPress={() => router.navigate('/clinica/agenda')} /></Row>
       <View style={{ gap: 10 }}>
         {hoje.length ? hoje.map(row) : <Card><Muted>Nenhum atendimento hoje.</Muted></Card>}
       </View>
-      <Button label="Novo paciente +" onPress={() => router.navigate('/clinica/pacientes?novo=1')} />
+      </Col>
+      </Cols>
+      <Button label="Novo paciente +" style={wide ? { alignSelf: 'flex-start', minWidth: 240 } : undefined} onPress={() => router.navigate('/clinica/pacientes?novo=1')} />
     </Screen>
   );
 }

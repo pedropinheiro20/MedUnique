@@ -41,7 +41,7 @@ export default function Pacientes() {
     if (r.error) { toast(r.error); return; }
     setName(''); setEmail(''); setPhone('');
     toast('Paciente cadastrada. Passe para ela o código de acesso que aparece na ficha.');
-    router.push(`/ficha/${r.id}`);
+    router.push(`/clinica/ficha/${r.id}`);
   };
 
   const field = (value: string, set: (v: string) => void, placeholder: string, extra?: object) => (
