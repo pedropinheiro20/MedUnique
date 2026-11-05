@@ -33,9 +33,11 @@
       <a href="#especialidades">Especialidades</a>
       <a href="#tecnologias">Tecnologias</a>
       <a href="#procedimentos">Procedimentos</a>
-      <a href="#corpo-clinico">Corpo clínico</a>
       <a href="#contato">Contato</a>
-      <a class="menu__entrar-celular" href="https://medunique.vercel.app">Entrar no sistema</a>
+      <div class="menu__botoes-celular">
+        <a class="botao botao--escuro" href="#contato">Agendar avaliação</a>
+        <a class="botao botao--linha" href="https://medunique.vercel.app">Entrar no sistema</a>
+      </div>
     </nav>
     <div class="topo__acoes">
       <a class="botao botao--linha" href="https://medunique.vercel.app">Entrar</a>
@@ -60,12 +62,21 @@
         <a class="botao botao--escuro" href="#contato">Agendar avaliação</a>
         <a class="botao botao--texto" href="#procedimentos">Conhecer os tratamentos <span aria-hidden="true">→</span></a>
       </div>
+      <ul class="selos">
+        <li>Avaliação com médico</li>
+        <li>Plano por escrito</li>
+        <li>Acompanhamento pelo sistema</li>
+      </ul>
     </div>
     <div class="abertura__imagem aparece">
       <div class="arco">
         <img src="img/retrato.jpg" alt="Paciente da Clínica Med Unique" width="380" height="646">
       </div>
-      <img class="abertura__simbolo" src="img/simbolo.png" alt="" width="120" height="120">
+      <a class="abertura__cartao" href="#contato">
+        <img src="img/simbolo.png" alt="" width="40" height="40">
+        <span><strong>Primeira visita?</strong><small>Comece pela avaliação</small></span>
+        <span class="abertura__cartao-seta" aria-hidden="true">→</span>
+      </a>
     </div>
   </div>
   <div class="conteudo">
@@ -127,6 +138,7 @@
           <div class="vitrine__texto">
             <h3>Dermatologia</h3>
             <p>Saúde da pele, cabelos e unhas, do diagnóstico ao tratamento.</p>
+            <a class="vitrine__link" href="#contato">Agendar avaliação <span aria-hidden="true">→</span></a>
           </div>
         </article>
         <article class="vitrine__cartao">
@@ -134,6 +146,7 @@
           <div class="vitrine__texto">
             <h3>Cirurgia plástica</h3>
             <p>Avaliação e procedimentos com cirurgião plástico.</p>
+            <a class="vitrine__link" href="#contato">Agendar avaliação <span aria-hidden="true">→</span></a>
           </div>
         </article>
         <article class="vitrine__cartao">
@@ -141,6 +154,7 @@
           <div class="vitrine__texto">
             <h3>Ginecologia</h3>
             <p>Consultas, prevenção, DIU, implantes e saúde íntima.</p>
+            <a class="vitrine__link" href="#contato">Agendar avaliação <span aria-hidden="true">→</span></a>
           </div>
         </article>
         <article class="vitrine__cartao">
@@ -148,6 +162,7 @@
           <div class="vitrine__texto">
             <h3>Endocrinologia</h3>
             <p>Hormônios, metabolismo e controle de peso.</p>
+            <a class="vitrine__link" href="#contato">Agendar avaliação <span aria-hidden="true">→</span></a>
           </div>
         </article>
         <article class="vitrine__cartao">
@@ -155,6 +170,7 @@
           <div class="vitrine__texto">
             <h3>Nutrição</h3>
             <p>Planos alimentares e acompanhamento contínuo.</p>
+            <a class="vitrine__link" href="#contato">Agendar avaliação <span aria-hidden="true">→</span></a>
           </div>
         </article>
         <article class="vitrine__cartao">
@@ -162,6 +178,7 @@
           <div class="vitrine__texto">
             <h3>Cardiologia e vascular</h3>
             <p>Consultas, eletrocardiograma, ecocardiograma e doppler.</p>
+            <a class="vitrine__link" href="#contato">Agendar avaliação <span aria-hidden="true">→</span></a>
           </div>
         </article>
         <article class="vitrine__cartao">
@@ -169,6 +186,7 @@
           <div class="vitrine__texto">
             <h3>Neurologia</h3>
             <p>Consultas e toxina botulínica para enxaqueca e espasmos.</p>
+            <a class="vitrine__link" href="#contato">Agendar avaliação <span aria-hidden="true">→</span></a>
           </div>
         </article>
         <article class="vitrine__cartao">
@@ -176,10 +194,12 @@
           <div class="vitrine__texto">
             <h3>Ultrassonografia</h3>
             <p>Exames de imagem com laudo médico na própria clínica.</p>
+            <a class="vitrine__link" href="#contato">Agendar avaliação <span aria-hidden="true">→</span></a>
           </div>
         </article>
       </div>
       <div class="vitrine__setas">
+        <div class="vitrine__progresso" data-vitrine="vitrine-especialidades"><span></span></div>
         <button class="seta" data-alvo="vitrine-especialidades" data-dir="-1" aria-label="Anterior"><span aria-hidden="true">←</span></button>
         <button class="seta" data-alvo="vitrine-especialidades" data-dir="1" aria-label="Próximo"><span aria-hidden="true">→</span></button>
       </div>
@@ -201,6 +221,7 @@
           <div class="vitrine__texto">
             <h3>Ultraformer</h3>
             <p>Ultrassom microfocado para firmeza do rosto, papada e corpo.</p>
+            <a class="vitrine__link" href="#contato">Agendar avaliação <span aria-hidden="true">→</span></a>
           </div>
         </article>
         <article class="vitrine__cartao vitrine__cartao--escuro">
@@ -208,6 +229,7 @@
           <div class="vitrine__texto">
             <h3>Laser CO2</h3>
             <p>Renovação da pele, cicatrizes de acne, estrias e rejuvenescimento.</p>
+            <a class="vitrine__link" href="#contato">Agendar avaliação <span aria-hidden="true">→</span></a>
           </div>
         </article>
         <article class="vitrine__cartao vitrine__cartao--escuro">
@@ -215,6 +237,7 @@
           <div class="vitrine__texto">
             <h3>T Sculptor</h3>
             <p>Tecnologia corporal para contorno e definição muscular.</p>
+            <a class="vitrine__link" href="#contato">Agendar avaliação <span aria-hidden="true">→</span></a>
           </div>
         </article>
         <article class="vitrine__cartao vitrine__cartao--escuro">
@@ -222,6 +245,7 @@
           <div class="vitrine__texto">
             <h3>Contour</h3>
             <p>Protocolos para gordura localizada e remodelamento do corpo.</p>
+            <a class="vitrine__link" href="#contato">Agendar avaliação <span aria-hidden="true">→</span></a>
           </div>
         </article>
         <article class="vitrine__cartao vitrine__cartao--escuro">
@@ -229,6 +253,7 @@
           <div class="vitrine__texto">
             <h3>Intensif</h3>
             <p>Radiofrequência microagulhada para textura e flacidez.</p>
+            <a class="vitrine__link" href="#contato">Agendar avaliação <span aria-hidden="true">→</span></a>
           </div>
         </article>
         <article class="vitrine__cartao vitrine__cartao--escuro">
@@ -236,10 +261,12 @@
           <div class="vitrine__texto">
             <h3>Laser 4Young</h3>
             <p>Rejuvenescimento a laser em protocolos intensivos.</p>
+            <a class="vitrine__link" href="#contato">Agendar avaliação <span aria-hidden="true">→</span></a>
           </div>
         </article>
       </div>
       <div class="vitrine__setas">
+        <div class="vitrine__progresso" data-vitrine="vitrine-tecnologias"><span></span></div>
         <button class="seta" data-alvo="vitrine-tecnologias" data-dir="-1" aria-label="Anterior"><span aria-hidden="true">←</span></button>
         <button class="seta" data-alvo="vitrine-tecnologias" data-dir="1" aria-label="Próximo"><span aria-hidden="true">→</span></button>
       </div>
@@ -263,6 +290,7 @@
           <div class="vitrine__texto">
             <h3>Toxina botulínica</h3>
             <p>Suaviza linhas de expressão com naturalidade.</p>
+            <a class="vitrine__link" href="#contato">Agendar avaliação <span aria-hidden="true">→</span></a>
           </div>
         </article>
         <article class="vitrine__cartao vitrine__cartao--nude">
@@ -270,6 +298,7 @@
           <div class="vitrine__texto">
             <h3>Preenchimento</h3>
             <p>Ácido hialurônico para volume, contorno e hidratação.</p>
+            <a class="vitrine__link" href="#contato">Agendar avaliação <span aria-hidden="true">→</span></a>
           </div>
         </article>
         <article class="vitrine__cartao vitrine__cartao--nude">
@@ -277,6 +306,7 @@
           <div class="vitrine__texto">
             <h3>Bioestimuladores</h3>
             <p>Sculptra e Radiesse para estimular o próprio colágeno.</p>
+            <a class="vitrine__link" href="#contato">Agendar avaliação <span aria-hidden="true">→</span></a>
           </div>
         </article>
         <article class="vitrine__cartao vitrine__cartao--nude">
@@ -284,6 +314,7 @@
           <div class="vitrine__texto">
             <h3>Fios de PDO</h3>
             <p>Sustentação e estímulo de colágeno, sem cortes.</p>
+            <a class="vitrine__link" href="#contato">Agendar avaliação <span aria-hidden="true">→</span></a>
           </div>
         </article>
         <article class="vitrine__cartao vitrine__cartao--nude">
@@ -291,6 +322,7 @@
           <div class="vitrine__texto">
             <h3>Profhilo</h3>
             <p>Hidratação profunda e viço para a pele.</p>
+            <a class="vitrine__link" href="#contato">Agendar avaliação <span aria-hidden="true">→</span></a>
           </div>
         </article>
         <article class="vitrine__cartao vitrine__cartao--nude">
@@ -298,6 +330,7 @@
           <div class="vitrine__texto">
             <h3>Skinbooster</h3>
             <p>Qualidade de pele, brilho e textura uniforme.</p>
+            <a class="vitrine__link" href="#contato">Agendar avaliação <span aria-hidden="true">→</span></a>
           </div>
         </article>
         <article class="vitrine__cartao vitrine__cartao--nude">
@@ -305,6 +338,7 @@
           <div class="vitrine__texto">
             <h3>HarmonyCa</h3>
             <p>Preenchimento e bioestímulo num só tratamento.</p>
+            <a class="vitrine__link" href="#contato">Agendar avaliação <span aria-hidden="true">→</span></a>
           </div>
         </article>
         <article class="vitrine__cartao vitrine__cartao--nude">
@@ -312,10 +346,12 @@
           <div class="vitrine__texto">
             <h3>MMP e PRP</h3>
             <p>Microinfusão e plasma rico em plaquetas para pele e cabelo.</p>
+            <a class="vitrine__link" href="#contato">Agendar avaliação <span aria-hidden="true">→</span></a>
           </div>
         </article>
       </div>
       <div class="vitrine__setas">
+        <div class="vitrine__progresso" data-vitrine="vitrine-procedimentos"><span></span></div>
         <button class="seta" data-alvo="vitrine-procedimentos" data-dir="-1" aria-label="Anterior"><span aria-hidden="true">←</span></button>
         <button class="seta" data-alvo="vitrine-procedimentos" data-dir="1" aria-label="Próximo"><span aria-hidden="true">→</span></button>
       </div>
@@ -422,7 +458,7 @@
       <h2>Antes de começar.</h2>
     </div>
     <div class="perguntas aparece">
-      <details>
+      <details open>
         <summary>Preciso de uma avaliação antes do tratamento?</summary>
         <p>Sim. Todo tratamento começa por uma avaliação, em que entendemos o seu objetivo e indicamos o que é seguro e adequado para você.</p>
       </details>
@@ -449,7 +485,10 @@
       <p class="sobretitulo sobretitulo--claro">Contato</p>
       <h2>Agende a sua avaliação.</h2>
       <p>Fale com a nossa equipe e encontre o melhor horário para você.</p>
-      <a class="botao botao--nude" href="#contato" data-a-confirmar>Falar pelo WhatsApp</a>
+      <div class="contato__botoes">
+        <a class="botao botao--nude" href="#contato" data-a-confirmar>Falar pelo WhatsApp</a>
+        <a class="botao botao--linha-clara" href="#contato" data-a-confirmar>Como chegar</a>
+      </div>
     </div>
     <dl class="contato__dados aparece">
       <div>
@@ -515,8 +554,9 @@
   </div>
 </footer>
 
-<a class="whatsapp" href="#contato" aria-label="Falar pelo WhatsApp" data-a-confirmar>
+<a class="whatsapp" id="whatsapp" href="#contato" aria-label="Falar pelo WhatsApp" data-a-confirmar>
   <svg viewBox="0 0 24 24" width="26" height="26" aria-hidden="true"><path fill="currentColor" d="M12 2a10 10 0 0 0-8.6 15.1L2 22l5-1.3A10 10 0 1 0 12 2Zm0 18.2a8.2 8.2 0 0 1-4.2-1.1l-.3-.2-3 .8.8-2.9-.2-.3A8.2 8.2 0 1 1 12 20.2Zm4.5-6.1c-.2-.1-1.5-.7-1.7-.8-.2-.1-.4-.1-.6.1l-.8 1c-.1.2-.3.2-.5.1a6.7 6.7 0 0 1-3.3-2.9c-.3-.4.2-.4.7-1.4.1-.2 0-.3 0-.4l-.8-1.8c-.2-.5-.4-.4-.6-.4h-.5a1 1 0 0 0-.7.3 3 3 0 0 0-.9 2.2 5.2 5.2 0 0 0 1.1 2.7 11.8 11.8 0 0 0 4.5 4c1.7.7 2.3.8 3.1.6.5-.1 1.5-.6 1.7-1.2.2-.6.2-1.1.2-1.2-.1-.1-.3-.2-.6-.3Z"/></svg>
+  <span class="whatsapp__rotulo">Agende pelo WhatsApp</span>
 </a>
 
 <script>
@@ -559,6 +599,41 @@
       var c = v.querySelector('.vitrine__cartao');
       v.scrollBy({ left: (c.offsetWidth + 20) * Number(b.dataset.dir), behavior: 'smooth' });
     });
+  });
+
+  // Menu marca a seção em que a pessoa está
+  var links = document.querySelectorAll('.menu > a[href^="#"]');
+  if ('IntersectionObserver' in window) {
+    var secoes = new IntersectionObserver(function (entradas) {
+      entradas.forEach(function (e) {
+        if (!e.isIntersecting) return;
+        links.forEach(function (l) { l.classList.toggle('ativo', l.getAttribute('href') === '#' + e.target.id); });
+      });
+    }, { rootMargin: '-45% 0px -50% 0px' });
+    links.forEach(function (l) { var alvo = document.querySelector(l.getAttribute('href')); if (alvo) secoes.observe(alvo); });
+  }
+
+  // Botão do WhatsApp aparece depois da abertura
+  var zap = document.getElementById('whatsapp');
+  function zapVisivel() { zap.classList.toggle('whatsapp--visivel', window.scrollY > window.innerHeight * 0.6); }
+  window.addEventListener('scroll', zapVisivel, { passive: true });
+  zapVisivel();
+
+  // Barra de progresso e setas das vitrines
+  document.querySelectorAll('.vitrine').forEach(function (v) {
+    var barra = document.querySelector('[data-vitrine="' + v.id + '"] span');
+    var setas = document.querySelectorAll('.seta[data-alvo="' + v.id + '"]');
+    function atualiza() {
+      var max = v.scrollWidth - v.clientWidth;
+      var visivel = v.clientWidth / v.scrollWidth;
+      var pos = max > 0 ? v.scrollLeft / max : 0;
+      if (barra) { barra.style.width = (visivel * 100) + '%'; barra.style.left = (pos * (100 - visivel * 100)) + '%'; }
+      setas[0].disabled = v.scrollLeft <= 2;
+      setas[1].disabled = v.scrollLeft >= max - 2;
+    }
+    v.addEventListener('scroll', atualiza, { passive: true });
+    window.addEventListener('resize', atualiza);
+    atualiza();
   });
 
   document.getElementById('ano').textContent = new Date().getFullYear();
