@@ -431,6 +431,148 @@ p { margin: 0 0 1em; }
 }
 .rodape__fim p { margin: 0; }
 
+
+/* Conheça a clínica */
+.conheca { position: relative; overflow: hidden; }
+.marca-dagua {
+  position: absolute; right: -140px; top: 60px;
+  width: 560px; height: 560px; opacity: 0.06; pointer-events: none;
+  filter: grayscale(1);
+}
+.conheca__grade {
+  position: relative;
+  display: grid; grid-template-columns: 0.85fr 1.15fr;
+  gap: clamp(40px, 7vw, 110px); align-items: center;
+}
+.conheca__imagem { position: relative; max-width: 440px; }
+.conheca__imagem::before {
+  content: ''; position: absolute; inset: -16px; border: 1px solid var(--linha); border-radius: 50%;
+}
+.conheca__imagem img { border-radius: 50%; width: 100%; aspect-ratio: 1; object-fit: cover; }
+.conheca p:not(.texto-grande):not(.sobretitulo) { color: var(--cinza); margin-bottom: 36px; }
+
+/* Vitrines (carrosséis) */
+.vitrine {
+  display: grid;
+  grid-auto-flow: column;
+  grid-auto-columns: calc((100% - 60px) / 4);
+  gap: 20px;
+  overflow-x: auto;
+  scroll-snap-type: x mandatory;
+  scrollbar-width: none;
+  padding-bottom: 4px;
+}
+.vitrine::-webkit-scrollbar { display: none; }
+.vitrine__cartao {
+  scroll-snap-align: start;
+  position: relative;
+  aspect-ratio: 3 / 4;
+  border-radius: 20px;
+  padding: 28px;
+  display: flex; flex-direction: column; justify-content: space-between;
+  background: var(--bege) url(img/simbolo.png) no-repeat right -60px top -60px / 220px;
+  overflow: hidden;
+  isolation: isolate;
+  transition: transform .4s ease;
+}
+.vitrine__cartao::before {
+  content: ''; position: absolute; inset: 0; z-index: -1;
+  background: inherit; filter: none;
+}
+.vitrine__cartao::after {
+  content: ''; position: absolute; inset: 0; z-index: -1;
+  background: linear-gradient(160deg, rgba(239,231,227,0.86), rgba(239,231,227,0.97) 55%);
+}
+.vitrine__cartao:hover { transform: translateY(-4px); }
+.vitrine__indice { font-family: var(--serifa); font-style: italic; font-size: 20px; color: var(--vinho); }
+.vitrine__texto h3 { margin-bottom: 10px; }
+.vitrine__texto p { margin: 0; font-size: 15px; color: var(--cinza); line-height: 1.55; }
+.vitrine__cartao--nude::after { background: linear-gradient(160deg, rgba(229,190,182,0.8), rgba(229,190,182,0.96) 55%); }
+.vitrine__cartao--nude .vitrine__texto p { color: var(--preto-suave); }
+.vitrine__cartao--escuro { color: var(--bege-claro); }
+.vitrine__cartao--escuro::after { background: linear-gradient(160deg, rgba(23,21,21,0.84), rgba(23,21,21,0.97) 55%); }
+.vitrine__cartao--escuro .vitrine__indice { color: var(--nude); }
+.vitrine__cartao--escuro .vitrine__texto p { color: rgba(247,242,239,0.7); }
+.vitrine__setas { display: flex; justify-content: flex-end; gap: 10px; margin-top: 28px; }
+.seta {
+  width: 48px; height: 48px; border-radius: 50%;
+  border: 1px solid var(--preto); background: transparent; color: var(--preto);
+  font-size: 18px; cursor: pointer; transition: background .25s, color .25s;
+}
+.seta:hover { background: var(--preto); color: var(--bege-claro); }
+
+/* Tecnologias */
+.tecnologias__grade {
+  display: grid; grid-template-columns: 0.8fr 1.2fr;
+  gap: clamp(40px, 6vw, 80px); align-items: center;
+}
+.tecnologias__texto p:not(.sobretitulo) { color: var(--cinza); }
+.tecnologias__vitrine .vitrine { grid-auto-columns: calc((100% - 40px) / 3); }
+
+/* Faixa escura com o símbolo */
+.faixa {
+  position: relative;
+  background-color: var(--preto);
+  color: var(--bege-claro);
+  padding: clamp(72px, 9vw, 120px) 0;
+  overflow: hidden;
+}
+.faixa::before {
+  content: ''; position: absolute; inset: 0;
+  background: url(img/simbolo.png) repeat 0 0 / 88px;
+  opacity: 0.05; filter: grayscale(1) brightness(2);
+}
+.faixa__grade { position: relative; display: grid; grid-template-columns: 1fr 1fr; gap: clamp(40px, 7vw, 110px); align-items: end; }
+.faixa h2 { margin: 0; }
+.faixa p { color: rgba(247,242,239,0.72); margin-bottom: 32px; }
+
+/* Corpo clínico */
+.equipe { display: grid; grid-template-columns: repeat(3, 1fr); gap: 28px; }
+.profissional__foto {
+  aspect-ratio: 4 / 5; border-radius: 20px; background: var(--bege-fundo);
+  display: grid; place-items: center; margin-bottom: 22px;
+}
+.profissional__foto img { width: 96px; height: 96px; opacity: 0.35; filter: grayscale(1); }
+.profissional h3 { margin-bottom: 4px; }
+.profissional p { color: var(--cinza); font-size: 14px; letter-spacing: 0.08em; text-transform: uppercase; margin: 0; }
+
+/* Rodapé em colunas */
+.rodape__grade { display: grid; grid-template-columns: 1.4fr 1fr 1fr 1.2fr; gap: 40px; }
+.rodape__frase { color: rgba(247,242,239,0.6); font-size: 15px; max-width: 300px; margin-top: 22px; }
+.rodape__coluna { display: flex; flex-direction: column; gap: 10px; font-size: 14px; color: rgba(247,242,239,0.72); }
+.rodape__coluna h4 { margin: 0 0 8px; font-size: 12px; font-weight: 500; letter-spacing: 0.22em; text-transform: uppercase; color: var(--nude); }
+.rodape__coluna a { text-decoration: none; }
+.rodape__coluna a:hover { color: var(--bege-claro); }
+
+/* WhatsApp flutuante */
+.whatsapp {
+  position: fixed; right: 22px; bottom: 22px; z-index: 40;
+  width: 56px; height: 56px; border-radius: 50%;
+  display: grid; place-items: center;
+  background: var(--preto); color: var(--nude);
+  box-shadow: 0 14px 30px -12px rgba(23,21,21,0.5);
+  transition: transform .25s;
+}
+.whatsapp:hover { transform: scale(1.06); }
+
+@media (max-width: 1080px) {
+  .vitrine { grid-auto-columns: calc((100% - 40px) / 3); }
+  .tecnologias__grade { grid-template-columns: 1fr; }
+}
+@media (max-width: 880px) {
+  .conheca__grade, .faixa__grade { grid-template-columns: 1fr; }
+  .conheca__imagem { max-width: 280px; margin: 16px auto 8px; }
+  .marca-dagua { width: 360px; height: 360px; right: -160px; top: 20px; }
+  .vitrine, .tecnologias__vitrine .vitrine { grid-auto-columns: 78%; }
+  .vitrine__cartao { aspect-ratio: 4 / 5; }
+  .equipe { grid-template-columns: 1fr 1fr; gap: 16px; }
+  .profissional h3 { font-size: 20px; }
+  .profissional p { font-size: 12px; }
+  .rodape__grade { grid-template-columns: 1fr 1fr; gap: 36px 24px; }
+  .rodape__grade > div:first-child { grid-column: 1 / -1; }
+  .whatsapp { right: 16px; bottom: 16px; width: 52px; height: 52px; }
+}
+
 /* Dados que ainda precisam ser confirmados pela clínica */
 [data-a-confirmar] { outline: 1px dashed var(--rosa); outline-offset: 4px; }
 
@@ -500,3 +642,6 @@ p { margin: 0 0 1em; }
   .marca__sub { display: none; }
   .abertura__botoes { gap: 20px; }
 }
+
+/* Evita que as vitrines alarguem a página */
+.tecnologias__grade > *, .conteudo > * { min-width: 0; }
