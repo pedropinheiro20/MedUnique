@@ -26,6 +26,8 @@ export type Boleto = {
   paidAt?: Date;
   code: string | null;
   proofSent: boolean;
+  pdfPath: string | null; // PDF do boleto anexado pela clínica
+  proofPath: string | null; // comprovante enviado pela paciente
 };
 
 export type Plan = {
@@ -39,6 +41,7 @@ export type Plan = {
   total: number;
   contractNumber: string | null;
   acceptedAt: Date | null;
+  contractPath: string | null; // contrato da paciente em PDF (anexado pela clínica)
   steps: Step[];
   boletos: Boleto[];
 };

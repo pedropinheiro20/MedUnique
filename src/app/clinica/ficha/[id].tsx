@@ -3,9 +3,9 @@ import { useState } from 'react';
 import { Pressable, View } from 'react-native';
 
 import { useSummaries } from '@/components/clinic';
-import { BOL_LABEL } from '@/components/patient';
-import { Avatar, Bar, Button, Card, Chip, H2, H3, Muted, Row, Screen, Sheet, StateView, Txt, useToast } from '@/components/ui';
-import { brl, firstName, fmt, num } from '@/data/model';
+import { BoletosAdmin, ContractAdmin, StepsAdmin } from '@/components/plan-admin';
+import { Avatar, Bar, Button, Card, Col, Cols, H2, H3, Muted, Row, Screen, Sheet, StateView, Txt, useToast } from '@/components/ui';
+import { firstName, fmt, num } from '@/data/model';
 import { useStore } from '@/state/store';
 import { useColors } from '@/theme';
 
@@ -15,7 +15,7 @@ export default function Ficha() {
   const c = useColors();
   const toast = useToast();
   const { id } = useLocalSearchParams<{ id: string }>();
-  const { pById, pPoints, rewards, registerStep, markPaid, addPoints, redeem, loading } = useStore();
+  const { pById, pPoints, rewards, registerStep, addPoints, redeem, loading } = useStore();
   const { one } = useSummaries();
   const [sheet, setSheet] = useState<null | 'bonus' | 'redeem' | 'nocred' | 'register'>(null);
   const [bonus, setBonus] = useState(50);
@@ -24,11 +24,10 @@ export default function Ficha() {
   const p = pById(id);
   if (!p) return <StateView who="clinica" loading={loading} empty="Paciente não encontrada." />;
   const sum = one(p);
-  const { plan, info, bol: b } = sum;
+  const { plan, info } = sum;
   const pct = sum.total ? Math.round((sum.done / sum.total) * 100) : 0;
   const pts = pPoints(p.id);
   const n = info?.nextStep ?? null;
-  const nextPay = info?.nextUnpaid ?? null;
 
   const run = async (f: () => Promise<string | null>, ok: string) => {
     setBusy(true);
@@ -82,9 +81,10 @@ export default function Ficha() {
       </Card>
 
       {!plan ? (
-        <Card style={{ gap: 6 }}>
+        <Card style={{ gap: 10 }}>
           <H3>Plano ainda não cadastrado</H3>
-          <Muted size={14}>O cadastro do plano, das etapas e dos boletos pela equipe entra no passo 5. Por enquanto, me envie os dados que eu lanço no servidor.</Muted>
+          <Muted size={14}>Monte o plano com os procedimentos da tabela da clínica, o valor e as parcelas do boleto.</Muted>
+          <Button label="Criar plano" onPress={() => router.push(`/clinica/plano/${p.id}`)} style={{ alignSelf: 'flex-start' }} />
         </Card>
       ) : null}
 
@@ -97,23 +97,21 @@ export default function Ficha() {
         </Card>
       ) : null}
 
-      {plan ? (
-        <Card>
-          <Row between><H3>Pagamento</H3>{b.s ? <Chip label={BOL_LABEL[b.s][0]} tone={BOL_LABEL[b.s][1]} /> : null}</Row>
-          <Muted size={14}>Boleto · {b.info}</Muted>
-          {nextPay ? (
-            <Button label={`Dar baixa (${brl(nextPay.value)} viram ${num(nextPay.value)} créditos)`} disabled={busy}
-              onPress={() => run(() => markPaid(nextPay.id), `Boleto baixado. ${num(nextPay.value)} créditos liberados para a paciente.`)} />
-          ) : null}
-        </Card>
-      ) : null}
-
       <Row style={{ flexWrap: 'wrap', gap: 8 }}>
         {n ? <Button label="Registrar procedimento" variant="ghost" disabled={busy} onPress={() => setSheet(sum.credOk ? 'register' : 'nocred')} /> : null}
         <Button label="Lançar pontos" variant="ghost" onPress={() => setSheet('bonus')} />
         <Button label="Resgatar recompensa" variant="ghost" onPress={() => { setReward(null); setSheet('redeem'); }} />
-        {plan ? <Button label="Contrato (PDF)" variant="ghost" onPress={() => router.push('/contrato-pdf')} /> : null}
       </Row>
+
+      {plan && info ? (
+        <Cols>
+          <Col><StepsAdmin plan={plan} info={info} /></Col>
+          <Col>
+            <BoletosAdmin plan={plan} info={info} />
+            <ContractAdmin plan={plan} />
+          </Col>
+        </Cols>
+      ) : null}
 
       {n ? (
         <Sheet visible={sheet === 'register'} onClose={() => setSheet(null)} title="Registrar procedimento" eyebrow={p.name}

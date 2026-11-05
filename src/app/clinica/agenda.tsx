@@ -46,7 +46,7 @@ export default function AgendaClinica() {
           );
         }) : <Card><Muted>Nenhum atendimento neste dia.</Muted></Card>}
       </View>
-      <Muted>As sessões vêm dos planos das pacientes. Para marcar uma nova, edite o plano na ficha da paciente (em breve).</Muted>
+      <Muted>As sessões vêm dos planos das pacientes. Para marcar, remarcar ou desmarcar, abra a ficha da paciente, em Sessões do plano.</Muted>
     </Screen>
   );
 }

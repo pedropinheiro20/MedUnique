@@ -29,6 +29,7 @@ export default function ClinicaLayout() {
       <Tabs.Screen name="resgates" options={{ title: 'Resgates' }} />
       <Tabs.Screen name="equipe" options={{ title: 'Equipe' }} />
       <Tabs.Screen name="ficha/[id]" options={{ title: 'Ficha' }} />
+      <Tabs.Screen name="plano/[patientId]" options={{ title: 'Novo plano' }} />
     </Tabs>
   );
 }

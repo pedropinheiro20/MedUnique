@@ -3,6 +3,7 @@ import { View } from 'react-native';
 import { ListRow } from '@/components/clinic';
 import { Button, Card, H2, H3, Muted, Row, Screen, Txt, useToast } from '@/components/ui';
 import { Boleto, brl, dayOf, fmt, MES, num, today } from '@/data/model';
+import { openFile } from '@/lib/files';
 import { useStore } from '@/state/store';
 import { useColors } from '@/theme';
 
@@ -29,9 +30,10 @@ export default function Financeiro() {
     const label = x.b.n === 1 ? 'Entrada' : `Parcela ${x.b.n - 1}`;
     return (
       <ListRow key={x.b.id} patient={p} title={p?.name ?? 'Paciente'} detail={`${label} · vence ${fmt(x.b.due)} · ${brl(x.b.value)}`}
-        right={action === 'baixar'
-          ? <Button label="Baixar" small onPress={() => baixar(x.b)} />
-          : <Button label="Baixar" small variant="ghost" onPress={() => baixar(x.b)} />} />
+        right={<Row style={{ gap: 6 }}>
+          {x.b.proofPath ? <Button label="Comprovante" small variant="ghost" onPress={async () => { const e = await openFile('comprovantes', x.b.proofPath!); if (e) toast(e); }} /> : null}
+          <Button label="Baixar" small variant={action === 'baixar' ? 'primary' : 'ghost'} onPress={() => baixar(x.b)} />
+        </Row>} />
     );
   };
   const kpi = (label: string, value: string, color?: string) => (

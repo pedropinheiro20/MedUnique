@@ -1,10 +1,10 @@
 import * as Clipboard from 'expo-clipboard';
-import * as DocumentPicker from 'expo-document-picker';
 import { router } from 'expo-router';
 import { useState } from 'react';
 import { View } from 'react-native';
 
 import { BolState, brl, fmt, num, Plan, Step } from '@/data/model';
+import { openFile, pickFile, Picked } from '@/lib/files';
 import { PlanInfo, useStore } from '@/state/store';
 import { useColors } from '@/theme';
 
@@ -105,12 +105,12 @@ export function BoletoCard({ plan, info }: { plan: Plan; info: PlanInfo }) {
   const { nextBoleto: nb, boletoStatus, daysTo, paidCount } = info;
   const boletos = plan.boletos;
   const [proofFor, setProofFor] = useState<string | null>(null);
-  const [file, setFile] = useState<string | null>(null);
+  const [file, setFile] = useState<Picked | null>(null);
   const stt = nb ? boletoStatus(nb) : null;
 
   const pick = async () => {
-    const r = await DocumentPicker.getDocumentAsync({ type: ['image/*', 'application/pdf'], copyToCacheDirectory: false });
-    if (!r.canceled) setFile(r.assets[0].name);
+    const f = await pickFile();
+    if (f) setFile(f);
   };
 
   return (
@@ -140,9 +140,10 @@ export function BoletoCard({ plan, info }: { plan: Plan; info: PlanInfo }) {
                 <View style={{ backgroundColor: c.surface, borderRadius: 10, borderWidth: 1, borderStyle: 'dashed', borderColor: c.line, padding: 12 }}>
                   <Txt size={13} selectable>{nb.code}</Txt>
                 </View>
-              ) : <Muted size={14}>A clínica ainda vai anexar o código deste boleto.</Muted>}
+              ) : !nb.pdfPath ? <Muted size={14}>A clínica ainda vai anexar o código deste boleto.</Muted> : null}
               <Row style={{ flexWrap: 'wrap', gap: 8 }}>
                 {nb.code ? <Button label="Copiar código" small onPress={async () => { await Clipboard.setStringAsync(nb.code!); toast('Código copiado. Cole no app do seu banco.'); }} /> : null}
+                {nb.pdfPath ? <Button label="Abrir boleto (PDF)" small variant="ghost" onPress={async () => { const e = await openFile('boletos', nb.pdfPath!); if (e) toast(e); }} /> : null}
                 <Button label="Já paguei" small variant="ghost" onPress={() => { setFile(null); setProofFor(nb.id); }} />
               </Row>
             </>
@@ -175,8 +176,14 @@ export function BoletoCard({ plan, info }: { plan: Plan; info: PlanInfo }) {
         text="Envie a foto ou o PDF do comprovante. A equipe financeira confere e dá baixa no boleto."
         okLabel="Enviar"
         okDisabled={!file}
-        onOk={async () => { const e = await sendProof(proofFor!); toast(e ?? 'Comprovante enviado para a equipe financeira.'); }}>
-        <Button label={file ? `Arquivo: ${file}` : 'Escolher arquivo'} variant="ghost" onPress={pick} />
+        onOk={async () => {
+          const b = boletos.find((x) => x.id === proofFor);
+          if (!b || !file) return;
+          toast('Enviando comprovante…');
+          const e = await sendProof(b, file);
+          toast(e ?? 'Comprovante enviado para a equipe financeira.');
+        }}>
+        <Button label={file ? `Arquivo: ${file.name}` : 'Escolher arquivo'} variant="ghost" onPress={pick} />
       </Sheet>
     </Card>
   );

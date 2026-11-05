@@ -32,7 +32,6 @@ export default function RootLayout() {
             <Stack.Screen name="entrar" />
             <Stack.Screen name="paciente" />
             <Stack.Screen name="clinica" />
-            <Stack.Screen name="contrato-pdf" options={{ presentation: 'modal' }} />
           </Stack>
         </ToastProvider>
       </StoreProvider>

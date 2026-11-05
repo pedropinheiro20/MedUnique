@@ -1,10 +1,10 @@
-import { router } from 'expo-router';
 import { useState } from 'react';
 import { Pressable, View } from 'react-native';
 
 import { BoletoCard, CreditCard } from '@/components/patient';
 import { Button, Card, Chev, Chip, H2, H3, Icon, Muted, Row, Screen, StateView, Txt, useToast } from '@/components/ui';
 import { brl, contractClauses, fmt, hhmm } from '@/data/model';
+import { openFile } from '@/lib/files';
 import { useMyPlan } from '@/state/store';
 import { Fonts, useColors } from '@/theme';
 
@@ -35,14 +35,18 @@ export default function Contrato() {
         {boletos.length ? <Row style={{ gap: 3 }}>{boletos.map((b) => <View key={b.id} style={{ flex: b.n === 1 && boletos.length > 1 ? 2 : 1, height: 22, borderRadius: 4, backgroundColor: b.paidAt ? c.noir : c.sunk }} />)}</Row> : null}
       </Card>
 
-      <Card onPress={() => router.push('/contrato-pdf')} style={{ flexDirection: 'row', alignItems: 'center', gap: 14 }}>
+      <Card onPress={async () => {
+        if (!plan.contractPath) { toast('A clínica ainda vai anexar o seu contrato em PDF.'); return; }
+        const e = await openFile('contratos', plan.contractPath);
+        if (e) toast(e);
+      }} style={{ flexDirection: 'row', alignItems: 'center', gap: 14 }}>
         <View style={{ width: 46, height: 54, borderRadius: 10, backgroundColor: c.noir, alignItems: 'center', justifyContent: 'center', gap: 1 }}>
           <Icon name="doc" size={20} color={c.onNoir} stroke={1.6} />
           <Txt w="bold" size={9} color={c.onNoir}>PDF</Txt>
         </View>
         <View style={{ flex: 1 }}>
           <Txt w="semibold">Contrato completo</Txt>
-          <Muted>{plan.contractNumber ? `Nº ${plan.contractNumber}` : 'Documento do seu plano'}</Muted>
+          <Muted>{!plan.contractPath ? 'A clínica ainda vai anexar o PDF' : plan.contractNumber ? `Nº ${plan.contractNumber}` : 'Documento do seu plano'}</Muted>
         </View>
         <Chev />
       </Card>
