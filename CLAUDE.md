@@ -8,6 +8,7 @@ Leia também `AGENTS.md` (regras do Expo) e `README.md` (como rodar).
 | Peça | Onde | Observação |
 | --- | --- | --- |
 | Site no ar | https://medunique.vercel.app | Vercel, projeto `medunique`; cada envio para `main` publica sozinho |
+| Site institucional | Pasta `site/` (HTML e CSS, sem build) | Projeto Vercel separado, com Root Directory `site`; o botão Entrar leva ao sistema |
 | Prévia | Link da Vercel para cada branch | Testar ali, nunca direto no site do ar |
 | Código | github.com/pedropinheiro20/MedUnique | Fonte única da verdade |
 | Banco e login | Supabase `medunique` (ref `bmmfynfqiurpogbdxszd`, São Paulo, grátis) | Regras de acesso (RLS) em todas as tabelas |
@@ -40,6 +41,7 @@ Leia também `AGENTS.md` (regras do Expo) e `README.md` (como rodar).
 
 | Data | Mudança | SQL |
 | --- | --- | --- |
+| 2026-11-05 | Site institucional em `site/`, com os dados e fotos do site antigo (medunique.com.br) | — |
 | 2026-11-05 | Etapa 2: criar plano, marcar/remarcar sessões, lançar e editar boletos, anexar PDF do boleto e do contrato, comprovante salvo de verdade | — |
 | 2026-11-05 | Menu lateral no computador, tela Equipe, ficha dentro da clínica, recarregar mantém a tela (PR #4) | `20261105120000_equipe_no_sistema.sql` |
 | 2026-11-03 | Ícone para "Adicionar à Tela de Início" (PR #3) | — |
