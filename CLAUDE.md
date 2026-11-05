@@ -41,6 +41,7 @@ Leia também `AGENTS.md` (regras do Expo) e `README.md` (como rodar).
 
 | Data | Mudança | SQL |
 | --- | --- | --- |
+| 2026-11-05 | Nova tela de entrada do sistema (foto da clínica + formulário), e o site leva direto a ela | — |
 | 2026-11-05 | Site institucional em `site/`, com os dados e fotos do site antigo (medunique.com.br) | — |
 | 2026-11-05 | Etapa 2: criar plano, marcar/remarcar sessões, lançar e editar boletos, anexar PDF do boleto e do contrato, comprovante salvo de verdade | — |
 | 2026-11-05 | Menu lateral no computador, tela Equipe, ficha dentro da clínica, recarregar mantém a tela (PR #4) | `20261105120000_equipe_no_sistema.sql` |
