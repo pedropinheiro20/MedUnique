@@ -57,7 +57,7 @@ export function ListRow({ time, patient, title, detail, right, onPress }: {
   time?: string; patient?: Patient | null; title: string; detail?: ReactNode; right?: ReactNode; onPress?: () => void;
 }) {
   const c = useColors();
-  const press = onPress ?? (patient ? () => router.push(`/ficha/${patient.id}`) : undefined);
+  const press = onPress ?? (patient ? () => router.push(`/clinica/ficha/${patient.id}`) : undefined);
   return (
     <Pressable
       disabled={!press}

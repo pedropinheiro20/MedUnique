@@ -42,21 +42,24 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [ready, setReady] = useState(false);
   const [session, setSession] = useState<Session | null>(null);
   const [profile, setProfile] = useState<Profile | null>(null);
+  // Só decide para onde levar a pessoa depois de ler a sessão salva; assim, ao recarregar a página, ela continua na mesma tela
+  const [loaded, setLoaded] = useState(false);
 
   useEffect(() => {
-    supabase.auth.getSession().then(({ data }) => setSession(data.session));
+    supabase.auth.getSession().then(({ data }) => { setSession(data.session); setLoaded(true); });
     const { data } = supabase.auth.onAuthStateChange((_e, s) => setSession(s));
     return () => data.subscription.unsubscribe();
   }, []);
 
   useEffect(() => {
     let alive = true;
+    if (!loaded) return;
     if (!session) { setProfile(null); setReady(true); return; }
     setReady(false);
     supabase.from('profiles').select('id, role, full_name').eq('id', session.user.id).maybeSingle()
       .then(({ data }) => { if (alive) { setProfile((data as Profile) ?? null); setReady(true); } });
     return () => { alive = false; };
-  }, [session?.user.id]);
+  }, [session?.user.id, loaded]);
 
   const value: Auth = {
     ready,
