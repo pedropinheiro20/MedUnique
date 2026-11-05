@@ -3,6 +3,7 @@ import { createContext, ReactNode, useCallback, useContext, useEffect, useMemo, 
 import {
   BolState, Boleto, dayOf, initials, parseDate, Patient, Plan, Reward, Step, today, Voucher,
 } from '@/data/model';
+import { fileName, Picked, uploadFile } from '@/lib/files';
 import { supabase } from '@/lib/supabase';
 
 import { useAuth } from './auth';
@@ -89,11 +90,12 @@ function build(raw: Raw) {
     const boletos: Boleto[] = raw.boletos.filter((b) => b.plan_id === r.id).sort((a, b) => a.number - b.number).map((b) => ({
       id: b.id, planId: r.id, n: b.number, due: parseDate(b.due_date)!, value: Number(b.amount),
       paidAt: parseDate(b.paid_at) ?? undefined, code: b.barcode, proofSent: !!b.proof_sent_at,
+      pdfPath: b.pdf_path ?? null, proofPath: b.proof_path ?? null,
     }));
     return {
       id: r.id, patientId: r.patient_id, name: r.name, professional: r.professional ?? '', phases: r.phases ?? [],
       start: parseDate(r.start_date), end: parseDate(r.end_date), total: Number(r.total_value),
-      contractNumber: r.contract_number, acceptedAt: parseDate(r.contract_accepted_at), steps, boletos,
+      contractNumber: r.contract_number, acceptedAt: parseDate(r.contract_accepted_at), contractPath: r.contract_pdf_path ?? null, steps, boletos,
       status: r.status as string,
     } as Plan & { status: string };
   });
@@ -120,7 +122,7 @@ type Store = ReturnType<typeof build> & {
   pPoints: (id: string) => number;
   // ações (gravam no servidor e recarregam)
   confirmStep: (stepId: string) => Promise<string | null>;
-  sendProof: (boletoId: string) => Promise<string | null>;
+  sendProof: (boleto: Boleto, file: Picked) => Promise<string | null>;
   acceptContract: (planId: string) => Promise<string | null>;
   markPaid: (boletoId: string) => Promise<string | null>;
   registerStep: (stepId: string, patientId: string) => Promise<string | null>;
@@ -188,7 +190,12 @@ export function StoreProvider({ children }: { children: ReactNode }) {
       pById: (id) => b.patients.find((p) => p.id === id),
       pPoints: (id) => b.points.get(id) ?? 0,
       confirmStep: (id) => act(supabase.rpc('confirm_step', { p_step: id })),
-      sendProof: (id) => act(supabase.rpc('send_boleto_proof', { p_boleto: id, p_path: 'enviado-pelo-app' })),
+      sendProof: async (b, file) => {
+        const path = `${b.planId}/${fileName(`comprovante-${b.n}`, file)}`;
+        const up = await uploadFile('comprovantes', path, file);
+        if (up) return up;
+        return act(supabase.rpc('send_boleto_proof', { p_boleto: b.id, p_path: path }));
+      },
       acceptContract: (id) => act(supabase.rpc('accept_contract', { p_plan: id })),
       markPaid: (id) => act(supabase.from('boletos').update({ paid_at: new Date().toISOString(), paid_by: uid }).eq('id', id)),
       registerStep: async (stepId, patientId) => {

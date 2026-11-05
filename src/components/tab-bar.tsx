@@ -21,7 +21,7 @@ export function TabBar({ state, descriptors, navigateToTab, icons }: BottomTabBa
   const visible = state.routes.filter((r) => icons[r.name]);
   const current = state.routes[state.index].name;
   // Telas fora do menu (como a ficha da paciente) deixam marcada a aba de Pacientes
-  const focusedName = current.startsWith('ficha') ? 'pacientes' : current;
+  const focusedName = current.startsWith('ficha') || current.startsWith('plano') ? 'pacientes' : current;
 
   const items = visible.map((route) => {
     const focused = focusedName === route.name;

@@ -12,7 +12,8 @@ Leia também `AGENTS.md` (regras do Expo) e `README.md` (como rodar).
 | Código | github.com/pedropinheiro20/MedUnique | Fonte única da verdade |
 | Banco e login | Supabase `medunique` (ref `bmmfynfqiurpogbdxszd`, São Paulo, grátis) | Regras de acesso (RLS) em todas as tabelas |
 | Mudanças do banco | `supabase/migrations/` | Numeradas por data; o dono roda no SQL Editor do Supabase |
-| Telas | `src/app/` (Expo Router) | `paciente/`, `clinica/`, `clinica/ficha/[id]`, `entrar`, `contrato-pdf` |
+| Telas | `src/app/` (Expo Router) | `paciente/`, `clinica/`, `clinica/ficha/[id]`, `clinica/plano/[patientId]` (novo plano), `entrar` |
+| Arquivos | Supabase Storage: `contratos`, `boletos`, `comprovantes` (privados) | Caminho `<plan_id>/<arquivo>`; abertos por link de 5 min (`src/lib/files.ts`) |
 | Dados e ações | `src/state/store.tsx`, `src/state/auth.tsx` | |
 | Visual | `src/theme.ts`, `src/components/` | Paleta bege-rosado + símbolo da logo; no computador (≥ 900 px) o menu fica na lateral |
 
@@ -39,6 +40,7 @@ Leia também `AGENTS.md` (regras do Expo) e `README.md` (como rodar).
 
 | Data | Mudança | SQL |
 | --- | --- | --- |
+| 2026-11-05 | Etapa 2: criar plano, marcar/remarcar sessões, lançar e editar boletos, anexar PDF do boleto e do contrato, comprovante salvo de verdade | — |
 | 2026-11-05 | Menu lateral no computador, tela Equipe, ficha dentro da clínica, recarregar mantém a tela (PR #4) | `20261105120000_equipe_no_sistema.sql` |
 | 2026-11-03 | Ícone para "Adicionar à Tela de Início" (PR #3) | — |
 | 2026-10-30 | Pontos conforme a paciente paga (PR #2) e catálogo de resgates com 48 itens (PR #1) | `20261030*.sql` |

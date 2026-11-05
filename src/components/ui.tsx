@@ -158,7 +158,8 @@ export function Cols({ children, style }: { children: ReactNode; style?: StylePr
   return <View style={[{ flexDirection: 'row', alignItems: 'flex-start', gap: 20 }, style]}>{children}</View>;
 }
 export function Col({ children, style }: { children: ReactNode; style?: StyleProp<ViewStyle> }) {
-  return <View style={[{ flex: 1, minWidth: 0, gap: 16 }, style]}>{children}</View>;
+  const wide = useWide();
+  return <View style={[wide ? { flex: 1, minWidth: 0, gap: 16 } : { gap: 16 }, style]}>{children}</View>;
 }
 
 // ---------- tela com cabeçalho da marca
