@@ -8,7 +8,7 @@ Leia também `AGENTS.md` (regras do Expo) e `README.md` (como rodar).
 | Peça | Onde | Observação |
 | --- | --- | --- |
 | Site no ar | https://clinicamedunique.vercel.app | Vercel, projeto `clinicamedunique` (Root Directory vazio); cada envio para `main` publica sozinho. Site em `/`, sistema em `/entrar`, `/paciente`, `/clinica`, assistente em `/api/chat` |
-| Site institucional | Pasta `site/` (HTML e CSS, sem build) | O build (`vercel.json`) copia o site para a raiz e guarda o app em `app.html`; o botão Entrar leva a `/entrar` |
+| Site institucional | Pasta `site/` (HTML e CSS, sem build) | O build (`vercel.json`) copia o site como `site.html` (servido em `/`) e guarda o app em `app.html`; o botão Entrar leva a `/entrar` |
 | Prévia | Link da Vercel para cada branch | Testar ali, nunca direto no site do ar |
 | Código | github.com/pedropinheiro20/MedUnique | Fonte única da verdade |
 | Banco e login | Supabase `medunique` (ref `bmmfynfqiurpogbdxszd`, São Paulo, grátis) | Regras de acesso (RLS) em todas as tabelas |
