@@ -1,8 +1,25 @@
 {
-  "buildCommand": "npx expo export --platform web --output-dir dist && mv dist/index.html dist/app.html && cp -r site/index.html site/estilo.css site/img dist/",
+  "buildCommand": "npx expo export --platform web --output-dir dist && mv dist/index.html dist/app.html && cp site/index.html dist/site.html && cp -r site/estilo.css site/chat.js site/img dist/",
   "outputDirectory": "dist",
   "headers": [
-    { "source": "/img/(.*)", "headers": [{ "key": "Cache-Control", "value": "public, max-age=2592000" }] }
+    {
+      "source": "/img/(.*)",
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "public, max-age=2592000"
+        }
+      ]
+    }
   ],
-  "rewrites": [{ "source": "/((?!api/).*)", "destination": "/app.html" }]
+  "rewrites": [
+    {
+      "source": "/",
+      "destination": "/site.html"
+    },
+    {
+      "source": "/((?!api/).*)",
+      "destination": "/app.html"
+    }
+  ]
 }
