@@ -7,8 +7,8 @@ Leia também `AGENTS.md` (regras do Expo) e `README.md` (como rodar).
 
 | Peça | Onde | Observação |
 | --- | --- | --- |
-| Site no ar | https://medunique.vercel.app | Vercel, projeto `medunique`; cada envio para `main` publica sozinho |
-| Site institucional | Pasta `site/` (HTML e CSS, sem build) | Projeto Vercel separado, com Root Directory `site`; o botão Entrar leva ao sistema |
+| Site no ar | https://clinicamedunique.vercel.app | Vercel, projeto `clinicamedunique` (Root Directory vazio); cada envio para `main` publica sozinho. Site em `/`, sistema em `/entrar`, `/paciente`, `/clinica`, assistente em `/api/chat` |
+| Site institucional | Pasta `site/` (HTML e CSS, sem build) | O build (`vercel.json`) copia o site para a raiz e guarda o app em `app.html`; o botão Entrar leva a `/entrar` |
 | Prévia | Link da Vercel para cada branch | Testar ali, nunca direto no site do ar |
 | Código | github.com/pedropinheiro20/MedUnique | Fonte única da verdade |
 | Banco e login | Supabase `medunique` (ref `bmmfynfqiurpogbdxszd`, São Paulo, grátis) | Regras de acesso (RLS) em todas as tabelas |
@@ -43,6 +43,7 @@ Leia também `AGENTS.md` (regras do Expo) e `README.md` (como rodar).
 
 | Data | Mudança | SQL |
 | --- | --- | --- |
+| 2026-11-13 | Site e sistema num só projeto da Vercel (`clinicamedunique`); o projeto `medunique` foi apagado | — |
 | 2026-11-13 | Assistente com IA (Groq): chat na área da paciente e agente com ações confirmadas no painel da clínica | — |
 | 2026-11-05 | Nova tela de entrada do sistema (foto da clínica + formulário), e o site leva direto a ela | — |
 | 2026-11-05 | Site institucional em `site/`, com os dados e fotos do site antigo (medunique.com.br) | — |
