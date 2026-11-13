@@ -16,6 +16,7 @@ Leia também `AGENTS.md` (regras do Expo) e `README.md` (como rodar).
 | Telas | `src/app/` (Expo Router) | `paciente/`, `clinica/`, `clinica/ficha/[id]`, `clinica/plano/[patientId]` (novo plano), `entrar` |
 | Arquivos | Supabase Storage: `contratos`, `boletos`, `comprovantes` (privados) | Caminho `<plan_id>/<arquivo>`; abertos por link de 5 min (`src/lib/files.ts`) |
 | Dados e ações | `src/state/store.tsx`, `src/state/auth.tsx` | |
+| Assistente com IA | `api/chat.ts` (função da Vercel), `src/components/chat.tsx` | Groq (grátis). Chave `GROQ_API_KEY` só na Vercel; `GROQ_MODEL` troca o modelo. Na clínica, ações só com Confirmar |
 | Visual | `src/theme.ts`, `src/components/` | Paleta bege-rosado + símbolo da logo; no computador (≥ 900 px) o menu fica na lateral |
 
 ## Decisões do dono (Pedro)
@@ -26,6 +27,7 @@ Leia também `AGENTS.md` (regras do Expo) e `README.md` (como rodar).
 - Pontos = valor do plano em R$, creditados conforme os boletos são pagos. A paciente não vê pontos.
 - Boletos são emitidos no banco da clínica. A equipe anexa o boleto e dá baixa manual.
 - Publicação só de graça: Vercel + ícone na tela do celular, sem lojas por enquanto.
+- Assistente com IA do Groq (plano grátis). A paciente consulta só os próprios dados e não vê pontos; o agente da clínica só propõe ações, que a pessoa confirma.
 
 ## Como mudar sem quebrar
 
@@ -41,6 +43,7 @@ Leia também `AGENTS.md` (regras do Expo) e `README.md` (como rodar).
 
 | Data | Mudança | SQL |
 | --- | --- | --- |
+| 2026-11-13 | Assistente com IA (Groq): chat na área da paciente e agente com ações confirmadas no painel da clínica | — |
 | 2026-11-05 | Nova tela de entrada do sistema (foto da clínica + formulário), e o site leva direto a ela | — |
 | 2026-11-05 | Site institucional em `site/`, com os dados e fotos do site antigo (medunique.com.br) | — |
 | 2026-11-05 | Etapa 2: criar plano, marcar/remarcar sessões, lançar e editar boletos, anexar PDF do boleto e do contrato, comprovante salvo de verdade | — |

@@ -12,11 +12,12 @@ export default function PacienteLayout() {
   return (
     <Tabs
       screenOptions={{ headerShown: false, tabBarPosition: wide ? 'left' : 'bottom' }}
-      tabBar={(props) => <TabBar {...props} icons={{ index: 'home', plano: 'plan', agenda: 'calendar', contrato: 'doc' }} />}>
+      tabBar={(props) => <TabBar {...props} icons={{ index: 'home', plano: 'plan', agenda: 'calendar', contrato: 'doc', assistente: 'chat' }} />}>
       <Tabs.Screen name="index" options={{ title: 'Início' }} />
       <Tabs.Screen name="plano" options={{ title: 'Meu plano' }} />
       <Tabs.Screen name="agenda" options={{ title: 'Agenda' }} />
       <Tabs.Screen name="contrato" options={{ title: 'Contrato' }} />
+      <Tabs.Screen name="assistente" options={{ title: 'Assistente' }} />
     </Tabs>
   );
 }

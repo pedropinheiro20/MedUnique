@@ -37,6 +37,8 @@ const ICONS = {
   chevron: 'M9 6l6 6-6 6',
   back: 'M15 6l-6 6 6 6',
   check: 'M5 12.5l4.5 4.5L19 7.5',
+  chat: 'M4 5h16v11H9l-5 4zM8 9.5h8M8 12.5h5',
+  send: 'M4 12l16-8-6 16-2.5-6.5z',
   key: 'M15.5 3a5.5 5.5 0 1 0 0 11 5.5 5.5 0 0 0 0-11zM11.6 12.4L3 21M6 18l2.5 2.5M8.5 15.5L11 18',
 };
 export type IconName = keyof typeof ICONS;
@@ -193,14 +195,14 @@ export function Screen({ children, who, scroll = true }: { children: ReactNode; 
     </Row>
   );
   const body = (
-    <View style={{ width: '100%', maxWidth: wide ? WideWidth[who] : MaxWidth, alignSelf: 'center', paddingHorizontal: wide ? 40 : 16, paddingTop: insets.top + (wide ? 28 : 12), paddingBottom: wide ? 48 : 32, gap: wide ? 20 : 16 }}>
+    <View style={{ width: '100%', maxWidth: wide ? WideWidth[who] : MaxWidth, alignSelf: 'center', ...(scroll ? {} : { flex: 1 }), paddingHorizontal: wide ? 40 : 16, paddingTop: insets.top + (wide ? 28 : 12), paddingBottom: wide ? 48 : 32, gap: wide ? 20 : 16 }}>
       {header}
       {children}
     </View>
   );
   return (
     <View style={{ flex: 1, backgroundColor: c.bg }}>
-      {scroll ? <ScrollView keyboardShouldPersistTaps="handled">{body}</ScrollView> : body}
+      {scroll ? <ScrollView keyboardShouldPersistTaps="handled">{body}</ScrollView> : <View style={{ flex: 1 }}>{body}</View>}
       <Sheet
         visible={menu}
         onClose={() => setMenu(false)}
