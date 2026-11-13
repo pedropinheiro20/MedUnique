@@ -126,6 +126,7 @@ type Store = ReturnType<typeof build> & {
   acceptContract: (planId: string) => Promise<string | null>;
   markPaid: (boletoId: string) => Promise<string | null>;
   registerStep: (stepId: string, patientId: string) => Promise<string | null>;
+  scheduleStep: (stepId: string, at: string | null) => Promise<string | null>; // at em ISO; null desmarca
   addPoints: (patientId: string, delta: number, reason: string) => Promise<string | null>;
   redeem: (patientId: string, reward: Reward) => Promise<{ code?: string; error?: string }>;
   validateVoucher: (voucherId: string) => Promise<string | null>;
@@ -204,6 +205,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
         await reload();
         return null;
       },
+      scheduleStep: (stepId, at) => act(supabase.from('plan_steps').update({ scheduled_at: at, confirmed_at: null }).eq('id', stepId)),
       addPoints: (patientId, delta, reason) =>
         act(supabase.from('points_ledger').insert({ patient_id: patientId, delta, reason, created_by: uid })),
       redeem: async (patientId, reward) => {

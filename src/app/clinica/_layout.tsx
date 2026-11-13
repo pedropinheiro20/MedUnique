@@ -18,7 +18,7 @@ export default function ClinicaLayout() {
       screenOptions={{ headerShown: false, tabBarPosition: wide ? 'left' : 'bottom' }}
       tabBar={(props) => (
         <TabBar {...props} icons={{
-          index: 'home', agenda: 'calendar', pacientes: 'users', financeiro: 'chart', resgates: 'star',
+          index: 'home', agenda: 'calendar', pacientes: 'users', financeiro: 'chart', resgates: 'star', assistente: 'chat',
           ...(showTeam ? { equipe: 'key' as const } : {}),
         }} />
       )}>
@@ -27,6 +27,7 @@ export default function ClinicaLayout() {
       <Tabs.Screen name="pacientes" options={{ title: 'Pacientes' }} />
       <Tabs.Screen name="financeiro" options={{ title: 'Financeiro' }} />
       <Tabs.Screen name="resgates" options={{ title: 'Resgates' }} />
+      <Tabs.Screen name="assistente" options={{ title: 'Assistente' }} />
       <Tabs.Screen name="equipe" options={{ title: 'Equipe' }} />
       <Tabs.Screen name="ficha/[id]" options={{ title: 'Ficha' }} />
       <Tabs.Screen name="plano/[patientId]" options={{ title: 'Novo plano' }} />

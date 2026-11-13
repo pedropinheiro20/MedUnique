@@ -34,6 +34,12 @@ npx expo start
 - **Financeiro:** vencidos, em aberto e comprovantes. Dar baixa libera os créditos na hora.
 - **Resgates:** validar vouchers e catálogo de recompensas.
 
+**Assistente com IA (Groq)** (`api/chat.ts` e `src/components/chat.tsx`)
+- **Paciente:** chat que responde sobre a clínica, os tratamentos e o plano dela (sessões, créditos, boletos). Só leitura; não dá orientação médica e não fala de pontos.
+- **Clínica:** agente que consulta agenda, pacientes, boletos e financeiro, e propõe ações (marcar, remarcar ou desmarcar sessão, registrar sessão realizada, dar baixa em boleto). Cada ação aparece com o botão **Confirmar**; nada é gravado sem o clique.
+- **Ativar:** crie uma chave grátis em https://console.groq.com/keys e, na Vercel (projeto `medunique` → Settings → Environment Variables), crie `GROQ_API_KEY` com essa chave para Production e Preview. Faça um novo deploy. Opcional: `GROQ_MODEL` para trocar o modelo (padrão `openai/gpt-oss-120b`).
+- O plano grátis do Groq tem limite de perguntas por minuto e por dia; quando passar, o chat pede para tentar de novo em instantes.
+
 ## Instalar no celular (Android, sem loja)
 
 1. Crie uma conta grátis em https://expo.dev.
