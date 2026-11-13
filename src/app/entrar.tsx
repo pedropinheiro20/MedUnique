@@ -23,7 +23,7 @@ const PONTOS = [
 ];
 
 const abrirSite = () => {
-  if (Platform.OS === 'web' && typeof window !== 'undefined') window.location.href = SITE;
+  if (Platform.OS === 'web' && typeof window !== 'undefined') window.location.href = '/'; // o site fica no mesmo endereço
   else Linking.openURL(SITE);
 };
 

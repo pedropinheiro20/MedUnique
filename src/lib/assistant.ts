@@ -16,7 +16,7 @@ export type ChatAction = {
 export type ChatMsg = { role: 'user' | 'assistant'; content: string; actions?: ChatAction[] };
 
 // No navegador usa o mesmo endereço do site (inclusive nas prévias); no celular nativo, o site no ar.
-const BASE = Platform.OS === 'web' ? '' : 'https://medunique.vercel.app';
+const BASE = Platform.OS === 'web' ? '' : 'https://clinicamedunique.vercel.app';
 
 export async function askAssistant(mode: 'paciente' | 'clinica', messages: ChatMsg[]): Promise<{ reply?: string; actions?: ChatAction[]; error?: string }> {
   const { data } = await supabase.auth.getSession();

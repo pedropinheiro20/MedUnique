@@ -165,7 +165,7 @@ export default function Equipe() {
         <Button label="Copiar mensagem com o código" variant="dark" onPress={async () => {
           if (!created) return;
           await Clipboard.setStringAsync(
-            `Olá! Seu acesso ao sistema MedUnique está pronto.\n1. Abra https://medunique.vercel.app\n2. Toque em Entrar e depois em "Primeiro acesso? Criar conta"\n3. Use o e-mail ${created.email} e o código ${created.code}, e crie a sua senha.`,
+            `Olá! Seu acesso ao sistema MedUnique está pronto.\n1. Abra https://clinicamedunique.vercel.app/entrar\n2. Toque em "Criar minha conta"\n3. Use o e-mail ${created.email} e o código ${created.code}, e crie a sua senha.`,
           );
           toast('Mensagem copiada. Cole no WhatsApp.');
         }} />

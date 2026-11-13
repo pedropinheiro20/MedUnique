@@ -1,5 +1,8 @@
 {
-  "buildCommand": "npx expo export --platform web --output-dir dist",
+  "buildCommand": "npx expo export --platform web --output-dir dist && mv dist/index.html dist/app.html && cp -r site/index.html site/estilo.css site/img dist/",
   "outputDirectory": "dist",
-  "rewrites": [{ "source": "/((?!api/).*)", "destination": "/index.html" }]
+  "headers": [
+    { "source": "/img/(.*)", "headers": [{ "key": "Cache-Control", "value": "public, max-age=2592000" }] }
+  ],
+  "rewrites": [{ "source": "/((?!api/).*)", "destination": "/app.html" }]
 }

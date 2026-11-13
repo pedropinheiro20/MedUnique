@@ -1,7 +1,7 @@
 {
   "name": "MedUnique",
   "short_name": "MedUnique",
-  "start_url": "/",
+  "start_url": "/entrar",
   "display": "standalone",
   "background_color": "#EFE7E3",
   "theme_color": "#EFE7E3",
