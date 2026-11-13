@@ -1,5 +1,5 @@
 {
-  "buildCommand": "npx expo export --platform web --output-dir dist && mv dist/index.html dist/app.html && cp site/index.html dist/site.html && cp -r site/estilo.css site/img dist/",
+  "buildCommand": "npx expo export --platform web --output-dir dist && mv dist/index.html dist/app.html && cp site/index.html dist/site.html && cp -r site/estilo.css site/chat.js site/img dist/",
   "outputDirectory": "dist",
   "headers": [
     {

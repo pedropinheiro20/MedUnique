@@ -1,6 +1,7 @@
 // Assistente com IA (Groq) do MedUnique. Roda como função da Vercel em /api/chat.
 //
 // - Área da paciente ("paciente"): chat de conversa. Responde sobre a clínica e sobre os dados DELA (só leitura).
+// - Site público ("site"): sem login, tira dúvidas da clínica e encaminha para uma atendente no WhatsApp.
 // - Painel da clínica ("clinica"): agente com ferramentas. Consulta o banco e PROPÕE ações; a ação só acontece
 //   quando a pessoa clica em Confirmar no app (quem grava é o próprio app, com o login dela).
 //
@@ -304,13 +305,13 @@ Como trabalhar:
 ${CLINIC}`;
 
 // ---------- Groq
-async function groq(messages: Msg[], tools?: unknown[]) {
+async function groq(messages: Msg[], tools?: unknown[], model = MODEL, maxTokens = 1200) {
   const key = process.env.GROQ_API_KEY;
   if (!key) throw new Fail(503, 'O assistente ainda não foi ativado: falta a chave do Groq (GROQ_API_KEY) na Vercel.');
   const r = await fetch(GROQ_URL, {
     method: 'POST',
     headers: { Authorization: `Bearer ${key}`, 'Content-Type': 'application/json' },
-    body: JSON.stringify({ model: MODEL, messages, temperature: 0.3, max_tokens: 1200, ...(tools ? { tools, tool_choice: 'auto' } : {}) }),
+    body: JSON.stringify({ model, messages, temperature: 0.3, max_tokens: maxTokens, ...(tools ? { tools, tool_choice: 'auto' } : {}) }),
   });
   if (r.status === 429) throw new Fail(429, 'O assistente recebeu muitas perguntas agora. Espere um minuto e tente de novo.');
   if (!r.ok) {
@@ -324,17 +325,73 @@ async function groq(messages: Msg[], tools?: unknown[]) {
 
 const clean = (t: string | null | undefined) => (t ?? '').replace(/\*\*(.+?)\*\*/g, '$1').trim();
 
+// ---------- site público (sem login): tira dúvidas e encaminha para uma atendente no WhatsApp
+// Usa um modelo menor, que tem limite próprio no Groq, para o site não gastar o limite da equipe e das pacientes.
+const SITE_MODEL = process.env.GROQ_SITE_MODEL || 'llama-3.1-8b-instant';
+const WA_TAG = '##WHATSAPP##';
+const SITE_INFO = `Clínica Med Unique, Parnaíba (PI): saúde e estética integradas. Rua Ademar Neves, 1626. WhatsApp (86) 99484-0219. Instagram @clinicamedunique. Estacionamento com vaga PcD.
+Centro clínico em endocrinologia e dermatologia, com estética avançada, exames e mais de dez especialidades; 21 profissionais.
+Especialidades: endocrinologia (diabetes, tireoide, osteoporose, menopausa, ovários policísticos, emagrecimento), dermatologia (acne, cicatrizes, melasma, manchas, queda de cabelo, hiperidrose, cirurgias de pele), cirurgia plástica, ginecologia e obstetrícia, cardiologia (eletro e ecocardiograma), angiologia e cirurgia vascular (doppler), neurologia (toxina para enxaqueca), nutrição, fisioterapia (pós-operatório, drenagem), reumatologia, nefrologia, oftalmologia.
+Exames na clínica: laboratoriais, bioimpedância, eletrocardiograma, ecocardiograma, ultrassonografia.
+Tecnologias: Ultraformer MPT (lifting sem cirurgia, gordura localizada), Intensif (microagulhamento robótico com radiofrequência), Laser Quadripico (manchas, rejuvenescimento, remoção de tatuagem), T-Sculptor (tonificação, gordura localizada), MMP (microinfusão na pele e couro cabeludo).
+Procedimentos: toxina botulínica, Radiesse e Diamond, Sculptra e Elleva, fios de PDO, skinbooster, PDRN e Rejuviskin, preenchimento facial e corporal, SPA (massagens, drenagem, limpeza de pele). Injetáveis: vitamina B12, vitamina D, Ferinject, Noripurum, Densis.
+Como funciona: 1) avaliação; 2) plano personalizado por escrito com etapas e valores; 3) sessões agendadas; 4) acompanhamento. Unique Care: plano anual com os tratamentos do ano, pago em parcelas por boleto; cada parcela libera créditos para as sessões; tudo acompanhado pelo sistema da clínica.
+Quem já é paciente entra no sistema pelo botão "Entrar no sistema" do site, com o código de acesso que a clínica envia.`;
+
+const sitePrompt = () => `Você é a assistente virtual do site da Clínica Med Unique. Hoje é ${weekday()}, ${brDay(todayISO())}. Fale em português do Brasil, com simpatia, em no máximo 4 frases curtas, texto simples sem markdown.
+
+Informações da clínica (use só isto; se não souber, diga que a equipe confirma pelo WhatsApp):
+${SITE_INFO}
+
+Regras:
+- Não informe preços nem prazos de resultado: dependem da avaliação.
+- Não dê diagnóstico, indicação de tratamento individual nem orientação médica. Em emergência, oriente procurar atendimento médico.
+- Não peça dados de saúde, CPF ou documentos. No máximo pergunte o nome e o que a pessoa procura.
+- Você não agenda: quem agenda é a atendente pelo WhatsApp.
+- Quando a pessoa quiser agendar, saber preço, falar com alguém, ou quando a dúvida precisar da equipe, termine a resposta com uma linha nova assim:
+${WA_TAG} <mensagem curta em primeira pessoa que a pessoa vai enviar para a clínica, com o nome dela se souber e o interesse>
+Exemplo: ${WA_TAG} Olá! Sou a Ana, vim pelo site e gostaria de agendar uma avaliação para fios de PDO.`;
+
+// Limite simples por visitante (por instância da função): evita que um só acesso gaste o limite grátis do dia.
+const hits = new Map<string, number[]>();
+function allow(ip: string) {
+  const now = Date.now();
+  const recent = (hits.get(ip) ?? []).filter((t) => now - t < 10 * 60e3);
+  if (recent.length >= 20) return false;
+  recent.push(now);
+  hits.set(ip, recent);
+  if (hits.size > 5000) hits.clear();
+  return true;
+}
+
+async function siteChat(req: Request, history: Msg[]) {
+  const origin = req.headers.get('origin');
+  const host = (u: string) => { try { return new URL(u).host; } catch { return ''; } };
+  if (origin && host(origin) !== host(req.url)) throw new Fail(403, 'Acesso não permitido.');
+  const ip = (req.headers.get('x-forwarded-for') ?? '').split(',')[0].trim() || 'anon';
+  if (!allow(ip)) throw new Fail(429, 'Você enviou muitas mensagens. Fale direto com a nossa equipe pelo WhatsApp.');
+  const msgs = history.slice(-8).map((m) => ({ ...m, content: (m.content ?? '').slice(0, 600) }));
+  const m = await groq([{ role: 'system', content: sitePrompt() }, ...msgs], undefined, SITE_MODEL, 400);
+  const raw = clean(m?.content);
+  const i = raw.indexOf(WA_TAG);
+  const reply = (i >= 0 ? raw.slice(0, i) : raw).trim() || 'Nossa equipe pode te ajudar pelo WhatsApp.';
+  const whatsapp = i >= 0 ? raw.slice(i + WA_TAG.length).trim().slice(0, 400) || null : null;
+  return Response.json({ reply, whatsapp });
+}
+
 export async function POST(req: Request) {
   try {
-    const token = (req.headers.get('authorization') ?? '').replace(/^Bearer\s+/i, '');
-    if (!token) throw new Fail(401, 'Entre no sistema para usar o assistente.');
     const body = await req.json().catch(() => null) as { mode?: string; messages?: { role: string; content: string }[] } | null;
-    const mode = body?.mode === 'clinica' ? 'clinica' : 'paciente';
-    const history: Msg[] = (body?.messages ?? [])
+    const mode = body?.mode === 'clinica' ? 'clinica' : body?.mode === 'site' ? 'site' : 'paciente';
+    const history: Msg[] = (Array.isArray(body?.messages) ? body!.messages : [])
       .filter((m) => (m.role === 'user' || m.role === 'assistant') && typeof m.content === 'string' && m.content.trim())
       .slice(-12)
       .map((m) => ({ role: m.role as 'user' | 'assistant', content: m.content.slice(0, 2000) }));
     if (!history.length || history[history.length - 1].role !== 'user') throw new Fail(400, 'Escreva uma pergunta.');
+    if (mode === 'site') return await siteChat(req, history);
+
+    const token = (req.headers.get('authorization') ?? '').replace(/^Bearer\s+/i, '');
+    if (!token) throw new Fail(401, 'Entre no sistema para usar o assistente.');
 
     const db = createClient(SUPABASE_URL, SUPABASE_KEY, {
       global: { headers: { Authorization: `Bearer ${token}` } },

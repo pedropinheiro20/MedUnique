@@ -38,6 +38,7 @@ npx expo start
 - **Paciente:** chat que responde sobre a clínica, os tratamentos e o plano dela (sessões, créditos, boletos). Só leitura; não dá orientação médica e não fala de pontos.
 - **Clínica:** agente que consulta agenda, pacientes, boletos e financeiro, e propõe ações (marcar, remarcar ou desmarcar sessão, registrar sessão realizada, dar baixa em boleto). Cada ação aparece com o botão **Confirmar**; nada é gravado sem o clique.
 - **Ativar:** crie uma chave grátis em https://console.groq.com/keys e, na Vercel (projeto `clinicamedunique` → Settings → Environment Variables), crie `GROQ_API_KEY` com essa chave para Production e Preview. Faça um novo deploy. Opcional: `GROQ_MODEL` para trocar o modelo (padrão `openai/gpt-oss-120b`).
+- **Site:** o botão flutuante do site abre um chat (`site/chat.js`) que tira dúvidas sobre a clínica e monta a mensagem para uma atendente no WhatsApp. Não informa preços, não dá orientação médica e não acessa o sistema. Usa um modelo menor (`GROQ_SITE_MODEL`, padrão `llama-3.1-8b-instant`) para não gastar o limite do sistema, e tem limite de 20 mensagens a cada 10 minutos por visitante.
 - O plano grátis do Groq tem limite de perguntas por minuto e por dia; quando passar, o chat pede para tentar de novo em instantes.
 
 ## Instalar no celular (Android, sem loja)

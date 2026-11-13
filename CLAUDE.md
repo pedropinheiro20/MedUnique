@@ -16,7 +16,7 @@ Leia também `AGENTS.md` (regras do Expo) e `README.md` (como rodar).
 | Telas | `src/app/` (Expo Router) | `paciente/`, `clinica/`, `clinica/ficha/[id]`, `clinica/plano/[patientId]` (novo plano), `entrar` |
 | Arquivos | Supabase Storage: `contratos`, `boletos`, `comprovantes` (privados) | Caminho `<plan_id>/<arquivo>`; abertos por link de 5 min (`src/lib/files.ts`) |
 | Dados e ações | `src/state/store.tsx`, `src/state/auth.tsx` | |
-| Assistente com IA | `api/chat.ts` (função da Vercel), `src/components/chat.tsx` | Groq (grátis). Chave `GROQ_API_KEY` só na Vercel; `GROQ_MODEL` troca o modelo. Na clínica, ações só com Confirmar |
+| Assistente com IA | `api/chat.ts` (função da Vercel), `src/components/chat.tsx` | Groq (grátis). Chave `GROQ_API_KEY` só na Vercel; `GROQ_MODEL` troca o modelo. Na clínica, ações só com Confirmar. No site (`site/chat.js`, modo `site`, sem login) usa `GROQ_SITE_MODEL` (padrão `llama-3.1-8b-instant`) e encaminha para o WhatsApp |
 | Visual | `src/theme.ts`, `src/components/` | Paleta bege-rosado + símbolo da logo; no computador (≥ 900 px) o menu fica na lateral |
 
 ## Decisões do dono (Pedro)
@@ -43,6 +43,7 @@ Leia também `AGENTS.md` (regras do Expo) e `README.md` (como rodar).
 
 | Data | Mudança | SQL |
 | --- | --- | --- |
+| 2026-11-13 | Site volta a abrir em `/` e ganha assistente que tira dúvidas e encaminha para uma atendente no WhatsApp | — |
 | 2026-11-13 | Site e sistema num só projeto da Vercel (`clinicamedunique`); o projeto `medunique` foi apagado | — |
 | 2026-11-13 | Assistente com IA (Groq): chat na área da paciente e agente com ações confirmadas no painel da clínica | — |
 | 2026-11-05 | Nova tela de entrada do sistema (foto da clínica + formulário), e o site leva direto a ela | — |
