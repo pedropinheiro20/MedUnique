@@ -327,7 +327,7 @@ const clean = (t: string | null | undefined) => (t ?? '').replace(/\*\*(.+?)\*\*
 
 // ---------- site público (sem login): tira dúvidas e encaminha para uma atendente no WhatsApp
 // Usa um modelo menor, que tem limite próprio no Groq, para o site não gastar o limite da equipe e das pacientes.
-const SITE_MODEL = process.env.GROQ_SITE_MODEL || 'llama-3.1-8b-instant';
+const SITE_MODEL = process.env.GROQ_SITE_MODEL || 'openai/gpt-oss-20b';
 const WA_TAG = '##WHATSAPP##';
 const SITE_INFO = `Clínica Med Unique, Parnaíba (PI): saúde e estética integradas. Rua Ademar Neves, 1626. WhatsApp (86) 99484-0219. Instagram @clinicamedunique. Estacionamento com vaga PcD.
 Centro clínico em endocrinologia e dermatologia, com estética avançada, exames e mais de dez especialidades; 21 profissionais.
