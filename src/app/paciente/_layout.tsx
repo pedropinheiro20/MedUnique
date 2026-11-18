@@ -8,7 +8,7 @@ import { useWide } from '@/theme';
 export default function PacienteLayout() {
   const { ready, session } = useAuth();
   const wide = useWide();
-  if (ready && !session) return <Redirect href="/" />;
+  if (ready && !session) return <Redirect href="/entrar" />;
   return (
     <Tabs
       screenOptions={{ headerShown: false, tabBarPosition: wide ? 'left' : 'bottom' }}

@@ -1,7 +1,7 @@
 import { router } from 'expo-router';
 import { createContext, ReactNode, useCallback, useContext, useRef, useState } from 'react';
 import {
-  ActivityIndicator, Image, Modal, Pressable, ScrollView, StyleProp, StyleSheet, Text, TextInput, TextProps, TextStyle, View, ViewStyle,
+  ActivityIndicator, Image, Linking, Modal, Platform, Pressable, ScrollView, StyleProp, StyleSheet, Text, TextInput, TextProps, TextStyle, View, ViewStyle,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Svg, { Circle, Defs, LinearGradient, Path, Stop } from 'react-native-svg';
@@ -164,6 +164,10 @@ export function Col({ children, style }: { children: ReactNode; style?: StylePro
   return <View style={[wide ? { flex: 1, minWidth: 0, gap: 16 } : { gap: 16 }, style]}>{children}</View>;
 }
 
+// O site institucional fica no mesmo endereço do sistema (em /, ver vercel.json); no celular, abre no navegador.
+const SITE = 'https://clinicamedunique.vercel.app';
+const isWeb = Platform.OS === 'web' && typeof window !== 'undefined';
+
 // ---------- tela com cabeçalho da marca
 export function Screen({ children, who, scroll = true }: { children: ReactNode; who: 'paciente' | 'clinica'; scroll?: boolean }) {
   const c = useColors();
@@ -219,7 +223,8 @@ export function Screen({ children, who, scroll = true }: { children: ReactNode; 
           <Button label="Equipe e acessos" variant="ghost" onPress={() => { setMenu(false); router.navigate('/clinica/equipe'); }} />
         ) : null}
         <Button label="Criar ou trocar senha" variant="ghost" onPress={() => { setMenu(false); setPw(''); setPwOpen(true); }} />
-        <Button label="Sair" variant="ghost" onPress={async () => { setMenu(false); await signOut(); router.replace('/'); }} />
+        <Button label="Ver o site da clínica" variant="ghost" onPress={() => { setMenu(false); if (isWeb) window.open('/', '_blank'); else Linking.openURL(SITE); }} />
+        <Button label="Sair" variant="ghost" onPress={async () => { setMenu(false); await signOut(); if (isWeb) window.location.href = '/'; else router.replace('/entrar'); }} />
       </Sheet>
       <Sheet visible={pwOpen} onClose={() => setPwOpen(false)} title="Criar ou trocar senha"
         text="Escolha uma senha com pelo menos 6 caracteres. Use ela para entrar no sistema junto com o seu e-mail."
