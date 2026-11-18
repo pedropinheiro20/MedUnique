@@ -56,7 +56,9 @@ export default function Inicio() {
             <Row>
               {n.confirmed
                 ? <Txt w="semibold" color={c.onNoir}>Presença confirmada ✓</Txt>
-                : <Button label="Confirmar presença" onPress={async () => { const e = await confirmStep(n.id); toast(e ?? 'Presença confirmada. Até lá!'); }} />}
+                : n.date
+                  ? <Button label="Confirmar presença" onPress={async () => { const e = await confirmStep(n.id); toast(e ?? 'Presença confirmada. Até lá!'); }} />
+                  : <Txt size={14} color={c.onNoir}>A clínica vai marcar a data desta sessão.</Txt>}
               <Button label="Agenda" variant="ghostLight" onPress={() => router.navigate('/paciente/agenda')} />
             </Row>
           ) : (
