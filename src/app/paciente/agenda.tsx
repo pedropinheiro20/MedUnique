@@ -38,7 +38,9 @@ export default function Agenda() {
             <Row style={{ flexWrap: 'wrap', gap: 8, marginTop: 4 }}>
               {s.confirmed
                 ? <Txt w="semibold" color={c.ok}>Presença confirmada</Txt>
-                : <Button label="Confirmar presença" small onPress={async () => { const e = await confirmStep(s.id); toast(e ?? 'Presença confirmada. Até lá!'); }} />}
+                : s.date
+                  ? <Button label="Confirmar presença" small onPress={async () => { const e = await confirmStep(s.id); toast(e ?? 'Presença confirmada. Até lá!'); }} />
+                  : <Muted>A clínica vai marcar a data desta sessão.</Muted>}
               <Button label="Reagendar" small variant="ghost" onPress={() => setResched(true)} />
             </Row>
           ) : null}
