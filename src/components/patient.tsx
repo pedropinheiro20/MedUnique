@@ -162,7 +162,7 @@ export function BoletoCard({ plan, info }: { plan: Plan; info: PlanInfo }) {
               </View>
               <View style={{ flex: 1 }}>
                 <Txt w="semibold" size={14}>{fmt(b.due)} · {brl(b.value)}</Txt>
-                <Muted size={12}>{b.paidAt ? `Pago em ${fmt(b.paidAt)}` : s === 'futuro' ? 'Disponível 10 dias antes' : 'Aguardando pagamento'}</Muted>
+                <Muted size={12}>{b.paidAt ? `Pago em ${fmt(b.paidAt)}` : s === 'futuro' ? 'Fica em aberto 30 dias antes do vencimento' : 'Aguardando pagamento'}</Muted>
               </View>
               <Chip label={BOL_LABEL[s][0]} tone={BOL_LABEL[s][1]} />
             </Row>
