@@ -366,6 +366,7 @@ Como trabalhar:
 - Os ids entre colchetes servem só para as ferramentas: nunca escreva ids na resposta.
 - Para propor uma ação, chame a ferramenta propor_*; nunca escreva "[Confirmar]" nem nomes de ferramentas no texto.
 - Se a ferramenta devolver um aviso (horário ocupado, falta de créditos), repita o aviso para a pessoa.
+- Falta de créditos ou contrato sem aceite não impedem marcar: proponha a data com propor_agendamento e repita o aviso. Horário já ocupado: pergunte antes de propor.
 - Para achar alguém, use buscar_pacientes e depois ficha_paciente. Se houver mais de uma paciente com o nome, pergunte qual.
 - Para alterar algo (marcar, remarcar, desmarcar, registrar sessão realizada, dar baixa em boleto) use as ferramentas propor_*. Elas NÃO gravam: mostram um botão Confirmar. Diga que é só confirmar no botão abaixo; nunca diga que já foi feito.
 - Se faltar informação (data, hora, qual sessão), pergunte antes de propor.
@@ -403,7 +404,9 @@ async function groq(messages: Msg[], tools?: unknown[], model = MODEL, maxTokens
 }
 
 // Tira negrito em markdown e algum id que o modelo deixe escapar na resposta
-const clean = (t: string | null | undefined) => (t ?? '').replace(/\*\*(.+?)\*\*/g, '$1').replace(/\s*[[(]id [0-9a-f-]{36}[\])]/gi, '').trim();
+const clean = (t: string | null | undefined) => (t ?? '').replace(/\*\*(.+?)\*\*/g, '$1')
+  .replace(/\s*(?:[–—-]\s*)?[[(]?\bid\b:?\s*[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}[\])]?/gi, '')
+  .replace(/^[ \t]*-[ \t]*$/gm, '').replace(/\n{3,}/g, '\n\n').trim();
 
 // ---------- site público (sem login): tira dúvidas e encaminha para uma atendente no WhatsApp
 // Usa um modelo menor, que tem limite próprio no Groq, para o site não gastar o limite da equipe e das pacientes.
