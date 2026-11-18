@@ -12,7 +12,11 @@ import { useColors } from '@/theme';
 
 type Item = { key: string; procedureId: string; title: string; price: string };
 
-const addMonths = (d: Date, n: number) => new Date(d.getFullYear(), d.getMonth() + n, d.getDate());
+// Mesmo dia nos meses seguintes; se o mês for mais curto (ex.: dia 31 em fevereiro), usa o último dia dele
+const addMonths = (d: Date, n: number) => {
+  const last = new Date(d.getFullYear(), d.getMonth() + n + 1, 0).getDate();
+  return new Date(d.getFullYear(), d.getMonth() + n, Math.min(d.getDate(), last));
+};
 
 // Parcelas: entrada + N parcelas iguais (os centavos que sobram vão na última)
 function splitInstallments(total: number, down: number, n: number, first: Date, start: Date) {
