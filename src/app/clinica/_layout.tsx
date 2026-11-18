@@ -8,7 +8,7 @@ import { useWide } from '@/theme';
 export default function ClinicaLayout() {
   const { ready, session, isStaff, profile } = useAuth();
   const wide = useWide();
-  if (ready && !session) return <Redirect href="/" />;
+  if (ready && !session) return <Redirect href="/entrar" />;
   if (ready && !isStaff) return <Redirect href="/paciente" />;
   // No celular, "Equipe" fica em Minha conta para não apertar a barra de baixo
   const showTeam = wide && profile?.role === 'admin';
