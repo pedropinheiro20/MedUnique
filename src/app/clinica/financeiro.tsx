@@ -1,7 +1,8 @@
+import { useState } from 'react';
 import { View } from 'react-native';
 
 import { ListRow } from '@/components/clinic';
-import { Button, Card, H2, H3, Muted, Row, Screen, Txt, useToast } from '@/components/ui';
+import { Button, Card, H2, H3, Muted, Row, Screen, Sheet, Txt, useToast } from '@/components/ui';
 import { Boleto, brl, dayOf, fmt, MES, num, today } from '@/data/model';
 import { openFile } from '@/lib/files';
 import { useStore } from '@/state/store';
@@ -10,6 +11,7 @@ import { useColors } from '@/theme';
 export default function Financeiro() {
   const c = useColors();
   const toast = useToast();
+  const [paying, setPaying] = useState<Boleto | null>(null);
   const { plans, pById, markPaid } = useStore();
   const t = today();
   const in30 = new Date(t.getFullYear(), t.getMonth(), t.getDate() + 30);
@@ -32,7 +34,7 @@ export default function Financeiro() {
       <ListRow key={x.b.id} patient={p} title={p?.name ?? 'Paciente'} detail={`${label} · vence ${fmt(x.b.due)} · ${brl(x.b.value)}`}
         right={<Row style={{ gap: 6 }}>
           {x.b.proofPath ? <Button label="Comprovante" small variant="ghost" onPress={async () => { const e = await openFile('comprovantes', x.b.proofPath!); if (e) toast(e); }} /> : null}
-          <Button label="Baixar" small variant={action === 'baixar' ? 'primary' : 'ghost'} onPress={() => baixar(x.b)} />
+          <Button label="Dar baixa" small variant={action === 'baixar' ? 'primary' : 'ghost'} onPress={() => setPaying(x.b)} />
         </Row>} />
     );
   };
@@ -57,6 +59,9 @@ export default function Financeiro() {
       <View style={{ gap: 10 }}>{late.length ? late.map((x) => line(x, 'lembrar')) : <Card><Muted>Nenhum boleto vencido.</Muted></Card>}</View>
       <H3>Vencem em 30 dias</H3>
       <View style={{ gap: 10 }}>{open.length ? open.map((x) => line(x, 'baixar')) : <Card><Muted>Nenhum boleto em aberto.</Muted></Card>}</View>
+      <Sheet visible={!!paying} onClose={() => setPaying(null)} title="Dar baixa no boleto?" okLabel="Dar baixa"
+        text={paying ? `${paying.n === 1 ? 'Entrada' : `Parcela ${paying.n - 1}`} de ${brl(paying.value)}. A paciente recebe ${num(paying.value)} créditos e ${num(Math.floor(paying.value))} pontos na hora.` : ''}
+        onOk={() => { if (paying) baixar(paying); }} />
       <Muted>Os boletos são emitidos no banco da clínica. Quando a paciente pagar, dê baixa aqui: o valor pago vira créditos para ela na hora.</Muted>
     </Screen>
   );

@@ -26,7 +26,7 @@ export default function Resgates() {
       <Card style={{ gap: 8 }}>
         <H3>Catálogo de recompensas</H3>
         {rewards.map((k) => <Row between key={k.id}><Txt size={14}>{k.name}</Txt><Txt w="bold" size={14} color={c.wine}>{num(k.cost)} pts</Txt></Row>)}
-        <Muted size={12}>Para mudar o catálogo, me envie as recompensas e os pontos de cada uma.</Muted>
+        <Muted size={12}>As recompensas e os pontos de cada uma são definidos pela clínica.</Muted>
       </Card>
     </Screen>
   );

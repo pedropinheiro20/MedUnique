@@ -214,7 +214,7 @@ export function Screen({ children, who, scroll = true }: { children: ReactNode; 
         eyebrow={profile?.full_name || undefined}
         text={canSwitch
           ? `Você está vendo o sistema como ${who === 'clinica' ? 'equipe da clínica' : 'paciente'}. Como você também tem um plano de paciente, pode alternar entre as duas áreas.`
-          : 'Você está conectada ao sistema MedUnique.'}>
+          : 'Você entrou no sistema MedUnique.'}>
         {canSwitch ? (
           <Button label={who === 'clinica' ? 'Ver como paciente' : 'Ver como clínica'} variant="dark"
             onPress={() => { setMenu(false); router.replace(who === 'clinica' ? '/paciente' : '/clinica'); }} />
