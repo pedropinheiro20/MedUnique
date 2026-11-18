@@ -16,6 +16,8 @@ const SUPABASE_URL = 'https://bmmfynfqiurpogbdxszd.supabase.co';
 const SUPABASE_KEY = 'sb_publishable_RmIyzZ6V8CUwJMHOiAtX1w_iIXN1PW3';
 const GROQ_URL = 'https://api.groq.com/openai/v1/chat/completions';
 const MODEL = process.env.GROQ_MODEL || 'openai/gpt-oss-120b';
+// Modelo menor, com cota própria no Groq: usado quando o principal bate o limite por minuto
+const FALLBACK_MODEL = 'openai/gpt-oss-20b';
 const TZ = 'America/Sao_Paulo';
 
 export const maxDuration = 30;
@@ -150,6 +152,7 @@ const TOOLS = [
     situacao: { type: 'string', enum: ['vencidos', 'a_vencer', 'em_analise'] }, dias: { type: 'number', description: 'Para a_vencer. Padrão 30.' },
   }, ['situacao']),
   fn('resumo_financeiro', 'Recebido no mês, total vencido, a vencer em 30 dias e comprovantes a conferir.', { mes: { type: 'string', description: 'AAAA-MM. Padrão: mês atual.' } }),
+  fn('visao_geral', 'Totais da clínica: pacientes cadastradas, com e sem plano ativo, próxima sessão sem créditos ou sem data, e vouchers aguardando uso.'),
   fn('propor_agendamento', 'Propõe marcar ou remarcar uma sessão. NÃO grava: mostra um botão Confirmar para a pessoa.', {
     etapa_id: { type: 'string' }, data: { type: 'string', description: 'AAAA-MM-DD' }, hora: { type: 'string', description: 'HH:MM (24 h)' },
   }, ['etapa_id', 'data', 'hora']),
@@ -170,6 +173,12 @@ async function namesByPlan(db: SupabaseClient, planIds: string[]) {
   return new Map(plans.map((p) => [p.id, { patientId: p.patient_id as string, name: pn.get(p.patient_id) ?? 'Paciente', plan: p.name as string }]));
 }
 
+// Planos que valem: os cancelados não entram em agenda, boletos nem financeiro
+async function livePlanIds(db: SupabaseClient) {
+  const plans = await must<Row[]>(db.from('plans').select('id').neq('status', 'cancelled'));
+  return new Set(plans.map((p) => p.id as string));
+}
+
 async function stepWithOwner(db: SupabaseClient, stepId: string) {
   if (!UUID.test(stepId)) throw new Fail(400, 'id de sessão inválido; consulte a ficha da paciente primeiro');
   const s = await must<Row | null>(db.from('plan_steps').select('*').eq('id', stepId).maybeSingle());
@@ -184,7 +193,9 @@ async function runTool(db: SupabaseClient, name: string, a: Row, actions: Action
     case 'buscar_pacientes': {
       const all = await must<Row[]>(db.from('patients').select('id, full_name, phone, email').order('full_name'));
       const q = norm(String(a.nome ?? '').trim());
-      const hits = q ? all.filter((p) => norm(p.full_name).includes(q)) : all;
+      // Todas as palavras, em qualquer ordem: "Ana Lima" encontra "Ana Beatriz Lima"
+      const words = q.split(/\s+/).filter(Boolean);
+      const hits = words.length ? all.filter((p) => words.every((w) => norm(p.full_name).includes(w))) : all;
       if (!hits.length) return 'Nenhuma paciente encontrada com esse nome.';
       return hits.slice(0, 15).map((p) => `${p.full_name} [id ${p.id}] ${p.phone ?? ''} ${p.email ?? ''}`.trim()).join('\n')
         + (hits.length > 15 ? `\n(+${hits.length - 15} outras; refine o nome)` : '');
@@ -209,9 +220,11 @@ async function runTool(db: SupabaseClient, name: string, a: Row, actions: Action
       const steps = await must<Row[]>(db.from('plan_steps').select('id, plan_id, title, scheduled_at, status, confirmed_at')
         .gte('scheduled_at', `${de}T00:00:00-03:00`).lte('scheduled_at', `${ate}T23:59:59-03:00`)
         .neq('status', 'cancelled').order('scheduled_at').limit(200));
-      if (!steps.length) return `Nenhuma sessão marcada de ${brDay(de)} a ${brDay(ate)}.`;
-      const own = await namesByPlan(db, steps.map((s) => s.plan_id));
-      return steps.map((s) => `${when(s.scheduled_at)} · ${own.get(s.plan_id)?.name} · ${s.title} · ${stepState(s)}${s.confirmed_at ? ', confirmada pela paciente' : ''} [id ${s.id}]`).join('\n');
+      const live = await livePlanIds(db);
+      const list = steps.filter((s) => live.has(s.plan_id));
+      if (!list.length) return `Nenhuma sessão marcada de ${brDay(de)} a ${brDay(ate)}.`;
+      const own = await namesByPlan(db, list.map((s) => s.plan_id));
+      return list.map((s) => `${when(s.scheduled_at)} · ${own.get(s.plan_id)?.name} · ${s.title} · ${stepState(s)}${s.confirmed_at ? ', confirmada pela paciente' : ''} [id ${s.id}]`).join('\n');
     }
     case 'sessoes_a_marcar': {
       const plans = await must<Row[]>(db.from('plans').select('id').eq('status', 'active'));
@@ -228,7 +241,8 @@ async function runTool(db: SupabaseClient, name: string, a: Row, actions: Action
     case 'boletos_pendentes': {
       const rows = await must<Row[]>(db.from('boletos').select('id, plan_id, number, amount, due_date, proof_sent_at').is('paid_at', null).order('due_date'));
       const limit = new Date(Date.now() + (Number(a.dias) || 30) * 864e5).toISOString().slice(0, 10);
-      const list = rows.filter((b) => (a.situacao === 'em_analise' ? b.proof_sent_at
+      const live = await livePlanIds(db);
+      const list = rows.filter((b) => live.has(b.plan_id)).filter((b) => (a.situacao === 'em_analise' ? b.proof_sent_at
         : a.situacao === 'vencidos' ? !b.proof_sent_at && b.due_date < today
           : !b.proof_sent_at && b.due_date >= today && b.due_date <= limit));
       if (!list.length) return 'Nenhum boleto nessa situação.';
@@ -239,7 +253,8 @@ async function runTool(db: SupabaseClient, name: string, a: Row, actions: Action
     }
     case 'resumo_financeiro': {
       const mes = /^\d{4}-\d{2}$/.test(a.mes ?? '') ? a.mes : today.slice(0, 7);
-      const rows = await must<Row[]>(db.from('boletos').select('amount, due_date, paid_at, proof_sent_at'));
+      const live = await livePlanIds(db);
+      const rows = (await must<Row[]>(db.from('boletos').select('plan_id, amount, due_date, paid_at, proof_sent_at'))).filter((b) => live.has(b.plan_id));
       const in30 = new Date(Date.now() + 30 * 864e5).toISOString().slice(0, 10);
       const sum = (l: Row[]) => `${l.length} boleto(s), ${brl(l.reduce((x, b) => x + Number(b.amount), 0))}`;
       const paidMonth = rows.filter((b) => b.paid_at && dayOfTs(b.paid_at).startsWith(mes));
@@ -251,16 +266,57 @@ async function runTool(db: SupabaseClient, name: string, a: Row, actions: Action
         `Comprovantes aguardando conferência: ${sum(open.filter((b) => b.proof_sent_at))}`,
       ].join('\n');
     }
+    case 'visao_geral': {
+      const [pats, plans, steps, bols, vouchers] = await Promise.all([
+        must<Row[]>(db.from('patients').select('id, profile_id')),
+        must<Row[]>(db.from('plans').select('id, patient_id').eq('status', 'active')),
+        must<Row[]>(db.from('plan_steps').select('plan_id, status, price_credits, position, scheduled_at').neq('status', 'cancelled')),
+        must<Row[]>(db.from('boletos').select('plan_id, amount, paid_at')),
+        must<Row[]>(db.from('vouchers').select('id').is('used_at', null)),
+      ]);
+      let semCreditos = 0;
+      let semData = 0;
+      for (const pl of plans) {
+        const st = steps.filter((s) => s.plan_id === pl.id).sort((x, y) => x.position - y.position);
+        const next = st.find((s) => s.status === 'scheduled');
+        if (!next) continue;
+        if (credits(st, bols.filter((b) => b.plan_id === pl.id)).balance < next.price_credits) semCreditos++;
+        if (!next.scheduled_at) semData++;
+      }
+      const comPlano = new Set(plans.map((p) => p.patient_id)).size;
+      return [
+        `Pacientes cadastradas: ${pats.length} (${pats.filter((p) => p.profile_id).length} já usam o app)`,
+        `Com plano ativo: ${comPlano}`,
+        `Sem plano ativo: ${pats.length - comPlano}`,
+        `Próxima sessão sem créditos: ${semCreditos}`,
+        `Próxima sessão sem data: ${semData}`,
+        `Vouchers aguardando uso: ${vouchers.length}`,
+      ].join('\n');
+    }
     case 'propor_agendamento': {
       const { s, owner } = await stepWithOwner(db, String(a.etapa_id));
       if (s.status !== 'scheduled') return 'Essa sessão já foi realizada; não dá para marcar.';
       const hora = String(a.hora ?? '').padStart(5, '0');
       if (!DAY.test(a.data) || !/^([01]\d|2[0-3]):[0-5]\d$/.test(hora)) return 'Data ou hora inválida. Use AAAA-MM-DD e HH:MM.';
       if (a.data < today) return 'Essa data já passou. Peça outra data.';
+      // Avisos para a equipe: outra sessão no mesmo horário e saldo de créditos da paciente
+      const avisos: string[] = [];
+      const clash = await must<Row[]>(db.from('plan_steps').select('id, plan_id').eq('scheduled_at', `${a.data}T${hora}:00-03:00`)
+        .neq('status', 'cancelled').neq('id', s.id));
+      if (clash.length) {
+        const own = await namesByPlan(db, clash.map((c) => c.plan_id));
+        avisos.push(`Atenção: já existe sessão nesse horário (${clash.map((c) => own.get(c.plan_id)?.name ?? 'outra paciente').join(', ')}).`);
+      }
+      const [st, bo] = await Promise.all([
+        must<Row[]>(db.from('plan_steps').select('status, price_credits').eq('plan_id', s.plan_id).neq('status', 'cancelled')),
+        must<Row[]>(db.from('boletos').select('amount, paid_at').eq('plan_id', s.plan_id)),
+      ]);
+      const saldo = credits(st, bo).balance;
+      if (saldo < s.price_credits) avisos.push(`A paciente tem ${saldo} créditos e a sessão usa ${s.price_credits}: dá para marcar, mas só para realizar depois do pagamento.`);
       const verb = s.scheduled_at ? `Remarcar (era ${when(s.scheduled_at)})` : 'Marcar';
       actions.push({ id: crypto.randomUUID(), type: 'agendar', stepId: s.id, patientId: owner.patientId, date: a.data, time: hora,
         label: `${verb} ${s.title} de ${owner.name} para ${brDay(a.data)} às ${hora}` });
-      return 'Proposta criada. A pessoa precisa clicar em Confirmar no app; ainda NÃO foi gravado.';
+      return ['Proposta criada. A pessoa precisa clicar em Confirmar no app; ainda NÃO foi gravado.', ...avisos].join(' ');
     }
     case 'propor_desmarcar': {
       const { s, owner } = await stepWithOwner(db, String(a.etapa_id));
@@ -290,17 +346,35 @@ async function runTool(db: SupabaseClient, name: string, a: Row, actions: Action
   return 'Ferramenta desconhecida.';
 }
 
+// Próximos 14 dias com o dia da semana, para o modelo não errar "sexta" ou "semana que vem"
+function calendar() {
+  const base = new Date(`${todayISO()}T12:00:00-03:00`).getTime();
+  return Array.from({ length: 14 }, (_, i) => {
+    const d = new Date(base + i * 864e5);
+    const iso = new Intl.DateTimeFormat('en-CA', { timeZone: TZ }).format(d);
+    const wd = new Intl.DateTimeFormat('pt-BR', { timeZone: TZ, weekday: 'long' }).format(d);
+    return `- ${wd}, ${brDay(iso)} (${iso})${i === 0 ? ' = hoje' : i === 1 ? ' = amanhã' : ''}`;
+  }).join('\n');
+}
+
 const ROLE: Record<string, string> = { admin: 'administração', reception: 'recepção', finance: 'financeiro', professional: 'profissional' };
 const clinicPrompt = (name: string, role: string) => `Você é o assistente do painel da Clínica Med Unique. Quem fala com você: ${name || 'equipe'} (${ROLE[role] ?? role}). Hoje é ${weekday()}, ${brDay(todayISO())} (horário de Parnaíba).
 
 Como trabalhar:
 - Use as ferramentas para consultar o sistema antes de responder. Nunca invente pacientes, datas, valores ou ids.
+- Não peça permissão para consultar: consulte e já responda. Para totais e quantidades, use visao_geral.
+- Os ids entre colchetes servem só para as ferramentas: nunca escreva ids na resposta.
+- Para propor uma ação, chame a ferramenta propor_*; nunca escreva "[Confirmar]" nem nomes de ferramentas no texto.
+- Se a ferramenta devolver um aviso (horário ocupado, falta de créditos), repita o aviso para a pessoa.
 - Para achar alguém, use buscar_pacientes e depois ficha_paciente. Se houver mais de uma paciente com o nome, pergunte qual.
 - Para alterar algo (marcar, remarcar, desmarcar, registrar sessão realizada, dar baixa em boleto) use as ferramentas propor_*. Elas NÃO gravam: mostram um botão Confirmar. Diga que é só confirmar no botão abaixo; nunca diga que já foi feito.
 - Se faltar informação (data, hora, qual sessão), pergunte antes de propor.
-- Datas relativas ("amanhã", "sexta") são calculadas a partir de hoje.
+- Datas relativas ("amanhã", "sexta", "semana que vem") vêm do calendário abaixo: use exatamente a data indicada nele.
 - Pontos são só para a equipe; nunca sugira contar pontos à paciente.
 - Responda em português do Brasil, curto e direto, texto simples sem markdown nem asteriscos. Use listas com hífen.
+
+Calendário dos próximos 14 dias:
+${calendar()}
 
 ${CLINIC}`;
 
@@ -312,10 +386,12 @@ async function groq(messages: Msg[], tools?: unknown[], model = MODEL, maxTokens
     method: 'POST',
     headers: { Authorization: `Bearer ${key}`, 'Content-Type': 'application/json' },
     body: JSON.stringify({ model, messages, temperature: 0.3, max_tokens: maxTokens,
-      // Os modelos gpt-oss raciocinam antes de responder, e esse raciocínio entra em max_tokens; pouco raciocínio evita resposta cortada.
-      ...(model.startsWith('openai/gpt-oss') ? { reasoning_effort: 'low' } : {}),
+      // Os modelos gpt-oss raciocinam antes de responder, e esse raciocínio entra em max_tokens: pouco raciocínio nos chats evita
+      // resposta cortada; o agente da clínica (com ferramentas) usa médio para escolher ferramentas e datas com precisão.
+      ...(model.startsWith('openai/gpt-oss') ? { reasoning_effort: tools ? 'medium' : 'low' } : {}),
       ...(tools ? { tools, tool_choice: 'auto' } : {}) }),
   });
+  if (r.status === 429 && model !== FALLBACK_MODEL) return groq(messages, tools, FALLBACK_MODEL, maxTokens);
   if (r.status === 429) throw new Fail(429, 'O assistente recebeu muitas perguntas agora. Espere um minuto e tente de novo.');
   if (!r.ok) {
     const detail = await r.text().catch(() => '');
@@ -326,7 +402,8 @@ async function groq(messages: Msg[], tools?: unknown[], model = MODEL, maxTokens
   return j.choices?.[0]?.message as { content: string | null; tool_calls?: ToolCall[] };
 }
 
-const clean = (t: string | null | undefined) => (t ?? '').replace(/\*\*(.+?)\*\*/g, '$1').trim();
+// Tira negrito em markdown e algum id que o modelo deixe escapar na resposta
+const clean = (t: string | null | undefined) => (t ?? '').replace(/\*\*(.+?)\*\*/g, '$1').replace(/\s*[[(]id [0-9a-f-]{36}[\])]/gi, '').trim();
 
 // ---------- site público (sem login): tira dúvidas e encaminha para uma atendente no WhatsApp
 // Usa um modelo menor, que tem limite próprio no Groq, para o site não gastar o limite da equipe e das pacientes.
@@ -418,7 +495,7 @@ export async function POST(req: Request) {
     const actions: Action[] = [];
     const msgs: Msg[] = [{ role: 'system', content: clinicPrompt(profile.full_name, profile.role) }, ...history];
     for (let round = 0; round < 6; round++) {
-      const m = await groq(msgs, TOOLS);
+      const m = await groq(msgs, TOOLS, MODEL, 2000);
       if (!m?.tool_calls?.length) {
         return Response.json({ reply: clean(m?.content) || (actions.length ? 'Confira e confirme abaixo.' : 'Não consegui responder. Pode reformular?'), actions });
       }
