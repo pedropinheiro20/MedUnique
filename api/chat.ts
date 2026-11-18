@@ -305,13 +305,16 @@ Como trabalhar:
 ${CLINIC}`;
 
 // ---------- Groq
-async function groq(messages: Msg[], tools?: unknown[], model = MODEL, maxTokens = 1200) {
+async function groq(messages: Msg[], tools?: unknown[], model = MODEL, maxTokens = 1600) {
   const key = process.env.GROQ_API_KEY;
   if (!key) throw new Fail(503, 'O assistente ainda não foi ativado: falta a chave do Groq (GROQ_API_KEY) na Vercel.');
   const r = await fetch(GROQ_URL, {
     method: 'POST',
     headers: { Authorization: `Bearer ${key}`, 'Content-Type': 'application/json' },
-    body: JSON.stringify({ model, messages, temperature: 0.3, max_tokens: maxTokens, ...(tools ? { tools, tool_choice: 'auto' } : {}) }),
+    body: JSON.stringify({ model, messages, temperature: 0.3, max_tokens: maxTokens,
+      // Os modelos gpt-oss raciocinam antes de responder, e esse raciocínio entra em max_tokens; pouco raciocínio evita resposta cortada.
+      ...(model.startsWith('openai/gpt-oss') ? { reasoning_effort: 'low' } : {}),
+      ...(tools ? { tools, tool_choice: 'auto' } : {}) }),
   });
   if (r.status === 429) throw new Fail(429, 'O assistente recebeu muitas perguntas agora. Espere um minuto e tente de novo.');
   if (!r.ok) {
@@ -352,14 +355,15 @@ Regras:
 ${WA_TAG} <mensagem curta em primeira pessoa que a pessoa vai enviar para a clínica, com o nome dela se souber e o interesse>
 Exemplo: ${WA_TAG} Olá! Sou a Ana, vim pelo site e gostaria de agendar uma avaliação para fios de PDO.`;
 
-// Limite simples por visitante (por instância da função): evita que um só acesso gaste o limite grátis do dia.
+// Limite simples por visitante do site ou por login (por instância da função): evita que um só acesso gaste o limite
+// grátis do dia, que é o mesmo para pacientes e equipe.
 const hits = new Map<string, number[]>();
-function allow(ip: string) {
+function allow(key: string, max = 20) {
   const now = Date.now();
-  const recent = (hits.get(ip) ?? []).filter((t) => now - t < 10 * 60e3);
-  if (recent.length >= 20) return false;
+  const recent = (hits.get(key) ?? []).filter((t) => now - t < 10 * 60e3);
+  if (recent.length >= max) return false;
   recent.push(now);
-  hits.set(ip, recent);
+  hits.set(key, recent);
   if (hits.size > 5000) hits.clear();
   return true;
 }
@@ -399,6 +403,7 @@ export async function POST(req: Request) {
     });
     const { data: u, error: ue } = await db.auth.getUser(token);
     if (ue || !u.user) throw new Fail(401, 'Sua sessão expirou. Entre de novo.');
+    if (!allow(`u:${u.user.id}`, 30)) throw new Fail(429, 'Você enviou muitas perguntas seguidas. Espere alguns minutos e tente de novo.');
     const profile = await must<Row | null>(db.from('profiles').select('role, full_name').eq('id', u.user.id).maybeSingle());
 
     if (mode === 'paciente') {

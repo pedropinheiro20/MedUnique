@@ -43,6 +43,7 @@ Leia também `AGENTS.md` (regras do Expo) e `README.md` (como rodar).
 
 | Data | Mudança | SQL |
 | --- | --- | --- |
+| 2026-11-17 | Assistente (auditoria): até 30 perguntas a cada 10 min por login (o site segue com 20 por visitante), modelos gpt-oss com pouco raciocínio e 1600 tokens para não cortar a resposta, e aviso na tela da paciente de que a IA é um serviço externo (LGPD) | — |
 | 2026-11-17 | Acesso entre site e sistema: Sair volta para o site, a tela de abertura antiga do app virou só redirecionamento (para a área da pessoa ou `/entrar`), sem login nas áreas vai para `/entrar`, e Minha conta ganhou "Ver o site da clínica" | — |
 | 2026-11-17 | Chat do site volta a responder: o Groq desligou o `llama-3.1-8b-instant`; agora usa `openai/gpt-oss-20b`, com limite de 1000 tokens por resposta | — |
 | 2026-11-13 | Site volta a abrir em `/` e ganha assistente que tira dúvidas e encaminha para uma atendente no WhatsApp | — |

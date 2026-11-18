@@ -133,7 +133,7 @@ export function AssistantChat({ who, intro, suggestions }: { who: 'paciente' | '
           </Pressable>
         </Row>
         <Muted size={11} style={{ textAlign: 'center' }}>
-          {who === 'paciente' ? 'Respostas automáticas. Não substituem a orientação da equipe da clínica.' : 'A IA pode errar. Confira antes de confirmar qualquer ação.'}
+          {who === 'paciente' ? 'Respostas automáticas de um serviço de IA externo, que recebe suas perguntas e os dados do seu plano para responder. Não substituem a orientação da equipe da clínica.' : 'A IA pode errar. Confira antes de confirmar qualquer ação.'}
         </Muted>
       </KeyboardAvoidingView>
     </Screen>
