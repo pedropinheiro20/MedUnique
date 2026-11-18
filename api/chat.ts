@@ -352,7 +352,7 @@ Regras:
 - Não peça dados de saúde, CPF ou documentos. No máximo pergunte o nome e o que a pessoa procura.
 - Você não agenda: quem agenda é a atendente pelo WhatsApp.
 - Quando a pessoa quiser agendar, saber preço, falar com alguém, ou quando a dúvida precisar da equipe, termine a resposta com uma linha nova assim:
-${WA_TAG} <mensagem curta em primeira pessoa que a pessoa vai enviar para a clínica, com o nome dela se souber e o interesse>
+${WA_TAG} <mensagem curta em primeira pessoa que a pessoa vai enviar para a clínica, com o interesse; só inclua o nome se a pessoa tiver dito, e nunca use colchetes como [seu nome]>
 Exemplo: ${WA_TAG} Olá! Sou a Ana, vim pelo site e gostaria de agendar uma avaliação para fios de PDO.`;
 
 // Limite simples por visitante do site ou por login (por instância da função): evita que um só acesso gaste o limite
@@ -379,7 +379,9 @@ async function siteChat(req: Request, history: Msg[]) {
   const raw = clean(m?.content);
   const i = raw.indexOf(WA_TAG);
   const reply = (i >= 0 ? raw.slice(0, i) : raw).trim() || 'Nossa equipe pode te ajudar pelo WhatsApp.';
-  const whatsapp = i >= 0 ? raw.slice(i + WA_TAG.length).trim().slice(0, 400) || null : null;
+  // Se o modelo deixar um campo para preencher (ex.: "Sou a [seu nome],"), tira esse trecho da mensagem
+  const zap = i >= 0 ? raw.slice(i + WA_TAG.length).replace(/\s*(sou|me chamo|meu nome é)\s+(a|o)?\s*\[[^\]]*\],?/gi, '').replace(/\[[^\]]*\]/g, '').trim() : '';
+  const whatsapp = zap.slice(0, 400) || null;
   return Response.json({ reply, whatsapp });
 }
 
