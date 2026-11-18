@@ -371,7 +371,7 @@ async function siteChat(req: Request, history: Msg[]) {
   const ip = (req.headers.get('x-forwarded-for') ?? '').split(',')[0].trim() || 'anon';
   if (!allow(ip)) throw new Fail(429, 'Você enviou muitas mensagens. Fale direto com a nossa equipe pelo WhatsApp.');
   const msgs = history.slice(-8).map((m) => ({ ...m, content: (m.content ?? '').slice(0, 600) }));
-  const m = await groq([{ role: 'system', content: sitePrompt() }, ...msgs], undefined, SITE_MODEL, 400);
+  const m = await groq([{ role: 'system', content: sitePrompt() }, ...msgs], undefined, SITE_MODEL, 1000);
   const raw = clean(m?.content);
   const i = raw.indexOf(WA_TAG);
   const reply = (i >= 0 ? raw.slice(0, i) : raw).trim() || 'Nossa equipe pode te ajudar pelo WhatsApp.';
