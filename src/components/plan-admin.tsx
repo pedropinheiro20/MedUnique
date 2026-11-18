@@ -35,6 +35,7 @@ function useRun() {
 export function StepsAdmin({ plan, info }: { plan: Plan; info: PlanInfo }) {
   const c = useColors();
   const { run, busy } = useRun();
+  const { reload } = useStore();
   const [edit, setEdit] = useState<Step | null>(null);
   const [day, setDay] = useState('');
   const [hour, setHour] = useState('');
@@ -59,16 +60,19 @@ export function StepsAdmin({ plan, info }: { plan: Plan; info: PlanInfo }) {
     run(() => supabase.from('plan_steps').update({ scheduled_at: null, confirmed_at: null }).eq('id', s.id), 'Sessão desmarcada.');
 
   const addStep = async (pr: { id: string; name: string; price: number }) => {
-    const position = Math.max(0, ...plan.steps.map((s) => s.position)) + 1;
+    // Conta também as sessões tiradas do plano, que continuam ocupando a posição
+    const { data: last } = await supabase.from('plan_steps').select('position').eq('plan_id', plan.id)
+      .order('position', { ascending: false }).limit(1).maybeSingle();
+    const position = (last?.position ?? 0) + 1;
     const ok = await run(() => supabase.from('plan_steps').insert({
       plan_id: plan.id, position, phase: 0, procedure_id: pr.id, title: pr.name, price_credits: pr.price,
     }), `${pr.name} incluído no plano.`);
-    if (ok) await supabase.from('plans').update({ total_value: plan.total + pr.price }).eq('id', plan.id);
+    if (ok) { await supabase.from('plans').update({ total_value: plan.total + pr.price }).eq('id', plan.id); await reload(); }
   };
   // Nada é apagado de vez: a sessão fica como "cancelada" e some do plano
   const removeStep = async (s: Step) => {
     const ok = await run(() => supabase.from('plan_steps').update({ status: 'cancelled', scheduled_at: null }).eq('id', s.id), `${s.title} tirado do plano.`);
-    if (ok) await supabase.from('plans').update({ total_value: Math.max(0, plan.total - s.price) }).eq('id', plan.id);
+    if (ok) { await supabase.from('plans').update({ total_value: Math.max(0, plan.total - s.price) }).eq('id', plan.id); await reload(); }
   };
 
   return (
