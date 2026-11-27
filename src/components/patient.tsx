@@ -104,6 +104,7 @@ export function BoletoCard({ plan, info }: { plan: Plan; info: PlanInfo }) {
   const { sendProof } = useStore();
   const { nextBoleto: nb, boletoStatus, daysTo, paidCount } = info;
   const boletos = plan.boletos;
+  const parcelas = boletos.filter((b) => !b.label).length - 1; // sem contar entrada e restantes
   const [proofFor, setProofFor] = useState<string | null>(null);
   const [file, setFile] = useState<Picked | null>(null);
   const stt = nb ? boletoStatus(nb) : null;
@@ -122,7 +123,7 @@ export function BoletoCard({ plan, info }: { plan: Plan; info: PlanInfo }) {
       {nb && stt ? (
         <View style={{ backgroundColor: stt === 'vencido' ? c.wineSoft : c.sunk, borderRadius: 18, padding: 16, gap: 12 }}>
           <Row between>
-            <Muted size={12}>{nb.n === 1 ? 'Entrada' : `Parcela ${nb.n - 1} de ${boletos.length - 1}`} · libera {num(nb.value)} créditos</Muted>
+            <Muted size={12}>{nb.label ?? (nb.n === 1 ? 'Entrada' : `Parcela ${nb.n - 1} de ${parcelas}`)} · libera {num(nb.value)} créditos</Muted>
             <Chip label={BOL_LABEL[stt][0]} tone={BOL_LABEL[stt][1]} />
           </Row>
           <View>
@@ -158,11 +159,11 @@ export function BoletoCard({ plan, info }: { plan: Plan; info: PlanInfo }) {
           return (
             <Row key={b.id} style={{ paddingVertical: 10, borderTopWidth: i ? 1 : 0, borderTopColor: c.line, gap: 10 }}>
               <View style={{ width: 28, height: 28, borderRadius: 14, backgroundColor: c.sunk, alignItems: 'center', justifyContent: 'center' }}>
-                <Txt w="bold" size={11} color={c.muted}>{b.n === 1 ? 'E' : String(b.n - 1).padStart(2, '0')}</Txt>
+                <Txt w="bold" size={11} color={c.muted}>{b.label ? 'R' : b.n === 1 ? 'E' : String(b.n - 1).padStart(2, '0')}</Txt>
               </View>
               <View style={{ flex: 1 }}>
                 <Txt w="semibold" size={14}>{fmt(b.due)} · {brl(b.value)}</Txt>
-                <Muted size={12}>{b.paidAt ? `Pago em ${fmt(b.paidAt)}` : s === 'futuro' ? 'Fica em aberto 30 dias antes do vencimento' : 'Aguardando pagamento'}</Muted>
+                <Muted size={12}>{b.label ? `${b.label} · ` : ''}{b.paidAt ? `Pago em ${fmt(b.paidAt)}${b.interest ? ` · juros ${brl(b.interest)}` : ''}` : s === 'futuro' ? 'Fica em aberto 30 dias antes do vencimento' : 'Aguardando pagamento'}</Muted>
               </View>
               <Chip label={BOL_LABEL[s][0]} tone={BOL_LABEL[s][1]} />
             </Row>

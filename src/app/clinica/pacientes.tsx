@@ -5,6 +5,7 @@ import { Pressable, TextInput, View } from 'react-native';
 import { ListRow, useSummaries } from '@/components/clinic';
 import { BOL_LABEL } from '@/components/patient';
 import { Bar, Button, Chip, H2, Muted, Row, Screen, Sheet, Txt, useToast } from '@/components/ui';
+import { searchByName } from '@/lib/search';
 import { useStore } from '@/state/store';
 import { Fonts, useColors } from '@/theme';
 
@@ -27,8 +28,8 @@ export default function Pacientes() {
     if (params.novo) { setNovo(true); router.setParams({ novo: undefined }); }
   }, [params.novo]);
 
-  const list = all.filter((x) => {
-    if (q && !x.p.name.toLowerCase().includes(q.toLowerCase())) return false;
+  // aceita erros de digitação e acentos: "Raphaela Sousa" acha "Rafaela Souza"
+  const list = searchByName(all, q, (x) => x.p.name).filter((x) => {
     if (filter === 'andamento') return !!x.plan && x.done < x.total;
     if (filter === 'concluidos') return !!x.plan && x.total > 0 && x.done >= x.total;
     if (filter === 'pendencia') return ['vencido', 'analise'].includes(x.bol.s ?? '') || !x.credOk;

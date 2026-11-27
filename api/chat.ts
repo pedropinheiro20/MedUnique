@@ -9,6 +9,8 @@
 // pergunta, então as regras de acesso (RLS) do Supabase continuam valendo: a paciente só enxerga os próprios dados.
 import { createClient, SupabaseClient } from '@supabase/supabase-js';
 
+import { searchByName } from '../src/lib/search';
+
 declare const process: { env: Record<string, string | undefined> };
 
 // Mesmos dados públicos de src/lib/supabase.ts (a chave publicável pode ficar no código).
@@ -54,7 +56,8 @@ function when(ts: string | null) {
 }
 const dayOfTs = (ts: string) => new Intl.DateTimeFormat('en-CA', { timeZone: TZ }).format(new Date(ts));
 const brl = (v: number) => 'R$ ' + Number(v).toFixed(2).replace('.', ',').replace(/\B(?=(\d{3})+(?!\d))/g, '.');
-const norm = (s: string) => s.normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase();
+// Nome do boleto: "Entrada", "Parcela 2" ou "Restante da parcela 2" (pagamento parcial)
+const bl = (b: Row): string => b.label ?? (b.number === 1 ? 'Entrada' : `Parcela ${b.number - 1}`);
 
 // ---------- regras do plano (iguais às de src/state/store.tsx)
 function boletoState(b: Row, today: string) {
@@ -104,7 +107,7 @@ function planText({ plan, steps, boletos }: PlanBundle, staff: boolean) {
       return `${i + 1}. ${s.title} (${s.price_credits} créditos) - ${stepState(s)}${s.status === 'scheduled' && s.scheduled_at ? `, ${when(s.scheduled_at)}${s.confirmed_at ? ', presença confirmada' : ''}` : ''}${s.status !== 'scheduled' && s.scheduled_at ? `, ${when(s.scheduled_at)}` : ''}${id(s)}${extra}`;
     }),
     'Boletos:',
-    ...boletos.map((b) => `${b.number === 1 ? 'Entrada' : `Parcela ${b.number - 1}`}: ${brl(b.amount)}, vence ${brDay(b.due_date)}, ${boletoState(b, today)}${id(b)}`),
+    ...boletos.map((b) => `${bl(b)}: ${brl(b.amount)}, vence ${brDay(b.due_date)}, ${boletoState(b, today)}${Number(b.interest) > 0 ? `, juros de atraso ${brl(b.interest)}` : ''}${id(b)}`),
   ];
   return lines.filter(Boolean).join('\n');
 }
@@ -192,10 +195,8 @@ async function runTool(db: SupabaseClient, name: string, a: Row, actions: Action
   switch (name) {
     case 'buscar_pacientes': {
       const all = await must<Row[]>(db.from('patients').select('id, full_name, phone, email').order('full_name'));
-      const q = norm(String(a.nome ?? '').trim());
-      // Todas as palavras, em qualquer ordem: "Ana Lima" encontra "Ana Beatriz Lima"
-      const words = q.split(/\s+/).filter(Boolean);
-      const hits = words.length ? all.filter((p) => words.every((w) => norm(p.full_name).includes(w))) : all;
+      // Todas as palavras, em qualquer ordem, tolerando erros: "Ana Lima" acha "Ana Beatriz Lima", "Raphaela" acha "Rafaela"
+      const hits = searchByName(all, String(a.nome ?? ''), (p) => String(p.full_name));
       if (!hits.length) return 'Nenhuma paciente encontrada com esse nome.';
       return hits.slice(0, 15).map((p) => `${p.full_name} [id ${p.id}] ${p.phone ?? ''} ${p.email ?? ''}`.trim()).join('\n')
         + (hits.length > 15 ? `\n(+${hits.length - 15} outras; refine o nome)` : '');
@@ -239,7 +240,7 @@ async function runTool(db: SupabaseClient, name: string, a: Row, actions: Action
       return open.map((s) => `${own.get(s.plan_id)?.name} · próxima: ${s.title} [id ${s.id}]`).join('\n');
     }
     case 'boletos_pendentes': {
-      const rows = await must<Row[]>(db.from('boletos').select('id, plan_id, number, amount, due_date, proof_sent_at').is('paid_at', null).order('due_date'));
+      const rows = await must<Row[]>(db.from('boletos').select('id, plan_id, number, label, amount, due_date, proof_sent_at').is('paid_at', null).order('due_date'));
       const limit = new Date(Date.now() + (Number(a.dias) || 30) * 864e5).toISOString().slice(0, 10);
       const live = await livePlanIds(db);
       const list = rows.filter((b) => live.has(b.plan_id)).filter((b) => (a.situacao === 'em_analise' ? b.proof_sent_at
@@ -248,7 +249,7 @@ async function runTool(db: SupabaseClient, name: string, a: Row, actions: Action
       if (!list.length) return 'Nenhum boleto nessa situação.';
       const own = await namesByPlan(db, list.map((b) => b.plan_id));
       const total = list.reduce((x, b) => x + Number(b.amount), 0);
-      return list.slice(0, 40).map((b) => `${own.get(b.plan_id)?.name} · ${b.number === 1 ? 'entrada' : `parcela ${b.number - 1}`} · ${brl(b.amount)} · vence ${brDay(b.due_date)} [id ${b.id}]`).join('\n')
+      return list.slice(0, 40).map((b) => `${own.get(b.plan_id)?.name} · ${bl(b).toLowerCase()} · ${brl(b.amount)} · vence ${brDay(b.due_date)} [id ${b.id}]`).join('\n')
         + `\nTotal: ${list.length} boleto(s), ${brl(total)}${list.length > 40 ? ' (mostrando 40)' : ''}`;
     }
     case 'resumo_financeiro': {
@@ -339,8 +340,8 @@ async function runTool(db: SupabaseClient, name: string, a: Row, actions: Action
       if (b.paid_at) return 'Esse boleto já está pago.';
       const owner = (await namesByPlan(db, [b.plan_id])).get(b.plan_id)!;
       actions.push({ id: crypto.randomUUID(), type: 'baixa', boletoId: b.id, patientId: owner.patientId,
-        label: `Dar baixa no boleto ${b.number === 1 ? 'da entrada' : `da parcela ${b.number - 1}`} de ${owner.name} (${brl(b.amount)}, venc. ${brDay(b.due_date)})` });
-      return 'Proposta criada. A pessoa precisa clicar em Confirmar; ainda NÃO foi gravado.';
+        label: `Dar baixa no boleto (${bl(b).toLowerCase()}) de ${owner.name}: ${brl(b.amount)} pago por inteiro, sem juros (venc. ${brDay(b.due_date)})` });
+      return 'Proposta criada. A pessoa precisa clicar em Confirmar; ainda NÃO foi gravado. Para pagamento parcial ou com juros, oriente a usar Dar baixa na tela Financeiro.';
     }
   }
   return 'Ferramenta desconhecida.';
