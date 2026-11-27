@@ -43,6 +43,7 @@ Leia também `AGENTS.md` (regras do Expo) e `README.md` (como rodar).
 
 | Data | Mudança | SQL |
 | --- | --- | --- |
+| 2026-11-27 | Contas a receber: juros de atraso na baixa (sugestão 2% de multa + 1% ao mês, editável; juros não viram créditos nem pontos), colunas de juros no Financeiro, pagamento parcial gera novo boleto com o restante e o mesmo vencimento; busca de pacientes (tela e assistente) aceita erros de digitação (`src/lib/search.ts`) | `20261127120000_juros_e_pagamento_parcial.sql` |
 | 2026-11-18 | Auditoria do sistema: incluir procedimento depois de tirar o último, valor do plano atualizado na hora, parcelas no fim do mês, confirmar presença só com data, Dar baixa com confirmação no Financeiro, endereço inexistente volta ao início, WhatsApp do chat do site sem "[seu nome]" e textos (Resgates, Minha conta, boletos futuros) | — |
 | 2026-11-17 | Assistente (auditoria): até 30 perguntas a cada 10 min por login (o site segue com 20 por visitante), modelos gpt-oss com pouco raciocínio e 1600 tokens para não cortar a resposta, e aviso na tela da paciente de que a IA é um serviço externo (LGPD) | — |
 | 2026-11-17 | Acesso entre site e sistema: Sair volta para o site, a tela de abertura antiga do app virou só redirecionamento (para a área da pessoa ou `/entrar`), sem login nas áreas vai para `/entrar`, e Minha conta ganhou "Ver o site da clínica" | — |

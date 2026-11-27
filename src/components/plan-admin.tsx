@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { View } from 'react-native';
 
-import { Boleto, brl, fmt, num, Plan, Step } from '@/data/model';
+import { bolLabel, Boleto, brl, fmt, num, Plan, Step } from '@/data/model';
 import { Bucket, fileName, openFile, pickFile, uploadFile } from '@/lib/files';
 import { supabase } from '@/lib/supabase';
 import { PlanInfo, useStore } from '@/state/store';
@@ -9,6 +9,7 @@ import { useColors } from '@/theme';
 
 import { brDate, Field, isoDay, maskDate, maskTime, money, parseBRDate, parseMoney, parseTime } from './fields';
 import { BOL_LABEL } from './patient';
+import { PayBoletoSheet } from './pay-boleto';
 import { ProcedurePicker } from './procedure-picker';
 import { Button, Card, Chip, H3, Muted, Row, Sheet, Txt, useToast } from './ui';
 
@@ -124,7 +125,6 @@ export function StepsAdmin({ plan, info }: { plan: Plan; info: PlanInfo }) {
 // ---------- boletos: código, PDF, vencimento, comprovante e baixa
 export function BoletosAdmin({ plan, info }: { plan: Plan; info: PlanInfo }) {
   const c = useColors();
-  const { markPaid } = useStore();
   const { run, busy, toast } = useRun();
   const [edit, setEdit] = useState<Boleto | 'novo' | null>(null);
   const [due, setDue] = useState('');
@@ -159,8 +159,9 @@ export function BoletosAdmin({ plan, info }: { plan: Plan; info: PlanInfo }) {
     run(() => supabase.from('boletos').update({ pdf_path: path }).eq('id', b.id), 'PDF anexado. A paciente já pode abrir o boleto.');
   };
   const view = async (bucket: Bucket, path: string) => { const e = await openFile(bucket, path); if (e) toast(e); };
-  const label = (b: Boleto) => (b.n === 1 ? 'Entrada' : `Parcela ${b.n - 1}`);
+  const label = bolLabel;
   const total = plan.boletos.reduce((a, b) => a + b.value, 0);
+  const interest = plan.boletos.reduce((a, b) => a + b.interest, 0);
 
   return (
     <Card>
@@ -176,7 +177,7 @@ export function BoletosAdmin({ plan, info }: { plan: Plan; info: PlanInfo }) {
               <View style={{ flex: 1 }}>
                 <Txt w="semibold" size={14}>{label(b)} · {brl(b.value)}</Txt>
                 <Muted>
-                  Vence {fmt(b.due)}{b.paidAt ? ` · pago em ${fmt(b.paidAt)}` : ''}
+                  Vence {fmt(b.due)}{b.paidAt ? ` · pago em ${fmt(b.paidAt)}` : ''}{b.interest ? ` · juros ${brl(b.interest)}` : ''}
                   {!b.paidAt ? ` · ${b.pdfPath ? 'PDF anexado' : 'sem PDF'}${b.code ? ' · com código' : ''}` : ''}
                 </Muted>
               </View>
@@ -193,6 +194,7 @@ export function BoletosAdmin({ plan, info }: { plan: Plan; info: PlanInfo }) {
         );
       })}
       {!plan.boletos.length ? <Muted>Nenhum boleto lançado.</Muted> : null}
+      {interest ? <Muted>Juros recebidos neste plano: {brl(interest)}</Muted> : null}
       <Button label="+ Novo boleto" variant="ghost" small style={{ alignSelf: 'flex-start' }} onPress={() => open('novo')} />
 
       <Sheet visible={!!edit} onClose={() => setEdit(null)} title={edit === 'novo' ? 'Novo boleto' : `Editar ${edit ? label(edit) : ''}`}
@@ -203,9 +205,7 @@ export function BoletosAdmin({ plan, info }: { plan: Plan; info: PlanInfo }) {
         </Row>
         <Field label="Linha digitável (opcional)" value={code} onChangeText={setCode} placeholder="00190.00009 01234.567890 …" autoCapitalize="none" />
       </Sheet>
-      <Sheet visible={!!paying} onClose={() => setPaying(null)} title="Dar baixa no boleto?" okLabel="Dar baixa"
-        text={paying ? `${label(paying)} de ${brl(paying.value)}. A paciente recebe ${num(paying.value)} créditos e ${num(Math.floor(paying.value))} pontos na hora.` : ''}
-        onOk={async () => { if (!paying) return; const e = await markPaid(paying.id); toast(e ?? 'Pagamento baixado. Créditos liberados.'); }} />
+      <PayBoletoSheet boleto={paying} onClose={() => setPaying(null)} />
     </Card>
   );
 }

@@ -28,7 +28,20 @@ export type Boleto = {
   proofSent: boolean;
   pdfPath: string | null; // PDF do boleto anexado pela clínica
   proofPath: string | null; // comprovante enviado pela paciente
+  interest: number; // juros/multa pagos com atraso (não viram créditos)
+  label: string | null; // ex.: "Restante da parcela 3" (o que faltou de um pagamento parcial)
 };
+
+// Nome do boleto: "Entrada", "Parcela 2" ou "Restante da parcela 2"
+export const bolLabel = (b: { n: number; label?: string | null }) => b.label ?? (b.n === 1 ? 'Entrada' : `Parcela ${b.n - 1}`);
+
+// Juros sugeridos para quem paga em atraso: multa de 2% + 1% ao mês (proporcional aos dias)
+export const JUROS = { multa: 0.02, mes: 0.01 };
+export function suggestedInterest(value: number, due: Date, on: Date = new Date()) {
+  const late = Math.floor((new Date(on).setHours(0, 0, 0, 0) - new Date(due).setHours(0, 0, 0, 0)) / 864e5);
+  if (late <= 0) return 0;
+  return Math.round(value * (JUROS.multa + (JUROS.mes / 30) * late) * 100) / 100;
+}
 
 export type Plan = {
   id: string;

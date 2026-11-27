@@ -1,7 +1,7 @@
 import { createContext, ReactNode, useCallback, useContext, useEffect, useMemo, useState } from 'react';
 
 import {
-  BolState, Boleto, dayOf, initials, parseDate, Patient, Plan, Reward, Step, today, Voucher,
+  bolLabel, BolState, Boleto, dayOf, initials, parseDate, Patient, Plan, Reward, Step, today, Voucher,
 } from '@/data/model';
 import { fileName, Picked, uploadFile } from '@/lib/files';
 import { supabase } from '@/lib/supabase';
@@ -54,7 +54,7 @@ export function planInfo(p: Plan) {
     }
   }
   const creditLedger = [
-    ...paid.map((b) => ({ label: b.n === 1 ? 'Pagamento da entrada' : `Pagamento da parcela ${b.n - 1}`, date: b.paidAt!, v: b.value })),
+    ...paid.map((b) => ({ label: b.label ? `Pagamento do ${b.label.toLowerCase()}` : `Pagamento da ${bolLabel(b).toLowerCase()}`, date: b.paidAt!, v: b.value })),
     ...p.steps.filter((s) => s.status === 'done' && s.price > 0).map((s) => ({ label: s.title, date: s.date ?? t, v: -s.price })),
   ].sort((a, b) => b.date.getTime() - a.date.getTime());
 
@@ -87,10 +87,12 @@ function build(raw: Raw) {
         what: s.what ?? '', care: s.care ?? [], confirmed: !!s.confirmed_at,
       };
     });
-    const boletos: Boleto[] = raw.boletos.filter((b) => b.plan_id === r.id).sort((a, b) => a.number - b.number).map((b) => ({
+    const boletos: Boleto[] = raw.boletos.filter((b) => b.plan_id === r.id)
+      .sort((a, b) => (a.due_date < b.due_date ? -1 : a.due_date > b.due_date ? 1 : a.number - b.number)).map((b) => ({
       id: b.id, planId: r.id, n: b.number, due: parseDate(b.due_date)!, value: Number(b.amount),
       paidAt: parseDate(b.paid_at) ?? undefined, code: b.barcode, proofSent: !!b.proof_sent_at,
       pdfPath: b.pdf_path ?? null, proofPath: b.proof_path ?? null,
+      interest: Number(b.interest ?? 0), label: b.label ?? null,
     }));
     return {
       id: r.id, patientId: r.patient_id, name: r.name, professional: r.professional ?? '', phases: r.phases ?? [],
@@ -124,7 +126,8 @@ type Store = ReturnType<typeof build> & {
   confirmStep: (stepId: string) => Promise<string | null>;
   sendProof: (boleto: Boleto, file: Picked) => Promise<string | null>;
   acceptContract: (planId: string) => Promise<string | null>;
-  markPaid: (boletoId: string) => Promise<string | null>;
+  // paid = quanto da parcela foi pago (sem juros). Se for menos que o valor, o restante vira outro boleto.
+  markPaid: (boletoId: string, opts?: { paid?: number; interest?: number }) => Promise<string | null>;
   registerStep: (stepId: string, patientId: string) => Promise<string | null>;
   scheduleStep: (stepId: string, at: string | null) => Promise<string | null>; // at em ISO; null desmarca
   addPoints: (patientId: string, delta: number, reason: string) => Promise<string | null>;
@@ -136,7 +139,7 @@ type Store = ReturnType<typeof build> & {
 const Ctx = createContext<Store | null>(null);
 
 const errText = (e: { message: string } | null) =>
-  !e ? null : /Créditos insuficientes/.test(e.message) ? e.message : /duplicate|unique/i.test(e.message) ? 'Já existe um cadastro com esses dados.' : 'Não foi possível salvar. Confira a conexão e tente de novo.';
+  !e ? null : /Créditos insuficientes|Valor pago inválido|já está pago/.test(e.message) ? e.message : /duplicate|unique/i.test(e.message) ? 'Já existe um cadastro com esses dados.' : 'Não foi possível salvar. Confira a conexão e tente de novo.';
 
 export function StoreProvider({ children }: { children: ReactNode }) {
   const { session, isStaff, ready } = useAuth();
@@ -198,7 +201,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
         return act(supabase.rpc('send_boleto_proof', { p_boleto: b.id, p_path: path }));
       },
       acceptContract: (id) => act(supabase.rpc('accept_contract', { p_plan: id })),
-      markPaid: (id) => act(supabase.from('boletos').update({ paid_at: new Date().toISOString(), paid_by: uid }).eq('id', id)),
+      markPaid: (id, opts) => act(supabase.rpc('pay_boleto', { p_boleto: id, p_paid: opts?.paid ?? null, p_interest: opts?.interest ?? 0 })),
       registerStep: async (stepId, patientId) => {
         const { error: e } = await supabase.from('plan_steps').update({ status: 'done' }).eq('id', stepId);
         if (e) return errText(e);

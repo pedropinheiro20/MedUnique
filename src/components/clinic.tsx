@@ -2,7 +2,7 @@ import { router } from 'expo-router';
 import { ReactNode } from 'react';
 import { Pressable, View } from 'react-native';
 
-import { BolState, fmt, MES, Patient, Plan, sameDay } from '@/data/model';
+import { bolLabel, BolState, fmt, MES, Patient, Plan, sameDay } from '@/data/model';
 import { planInfo, PlanInfo, useStore } from '@/state/store';
 import { useColors } from '@/theme';
 
@@ -25,12 +25,12 @@ export function useSummaries() {
     let bol: Summary['bol'] = { s: null, info: plan ? 'Sem boletos em aberto' : 'Sem plano ativo' };
     if (plan && info) {
       if (nb) {
-        const label = nb.n === 1 ? 'Entrada' : `Parcela ${nb.n - 1}`;
+        const label = bolLabel(nb);
         const s = info.boletoStatus(nb);
         bol = { s, info: s === 'vencido' ? `${label} venceu em ${fmt(nb.due).slice(0, 5)}` : s === 'analise' ? `${label}: comprovante enviado` : `${label} vence em ${fmt(nb.due).slice(0, 5)}` };
       } else if (info.nextUnpaid) {
         const u = info.nextUnpaid;
-        bol = { s: 'futuro', info: `${u.n === 1 ? 'Entrada' : `Parcela ${u.n - 1}`} vence em ${fmt(u.due).slice(0, 5)}` };
+        bol = { s: 'futuro', info: `${bolLabel(u)} vence em ${fmt(u.due).slice(0, 5)}` };
       } else if (plan.boletos.length) bol = { s: 'pago', info: 'Todas as parcelas pagas' };
     }
     return {
